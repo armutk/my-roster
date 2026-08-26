@@ -552,6 +552,171 @@ main {
   line-height: 1.5;
 }
 
+/* ---------- Pay ---------- */
+
+.pay-hero {
+  text-align: center;
+  padding: 4px 0 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+.pay-hero-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+.pay-hero-value {
+  font-size: 2.1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 4px 0 2px;
+  color: var(--accent);
+}
+.pay-hero-meta { font-size: 0.85rem; color: var(--text-dim); }
+
+.pay-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.88rem;
+}
+.pay-line:last-of-type { border-bottom: none; }
+.pay-line-label { color: var(--text); flex: 1; min-width: 0; }
+.pay-line-value { font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pay-line.sub { padding: 5px 0; font-size: 0.8rem; border-bottom: none; }
+.pay-line.sub .pay-line-label { color: var(--text-dim); }
+
+.pay-line.total {
+  border-top: 2px solid var(--border);
+  border-bottom: none;
+  margin-top: 6px;
+  padding-top: 12px;
+  font-size: 1rem;
+}
+.pay-line.total .pay-line-label { font-weight: 800; }
+.pay-line.total .pay-line-value { font-weight: 800; font-size: 1.15rem; color: var(--accent); }
+
+.pay-clause {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  background: var(--surface-alt);
+  padding: 1px 6px;
+  border-radius: 5px;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
+.pay-breakdown {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.pay-segments {
+  background: var(--surface-alt);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin: 8px 0;
+}
+.pay-seg-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  margin-bottom: 2px;
+}
+
+.pay-note {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin: 8px 0 0;
+  line-height: 1.5;
+}
+.pay-warning {
+  font-size: 0.78rem;
+  color: var(--afternoon-color);
+  margin: 8px 0 0;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+.pay-week-amount {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--accent);
+  margin: 6px 0 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pay-hours-compare {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+.pay-hours-compare .over { color: var(--afternoon-color); font-weight: 600; }
+.pay-hours-compare .under { color: var(--text-dim); font-weight: 600; }
+
+.pay-row-amount {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--accent);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.pay-tag {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  margin-right: 4px;
+}
+.pay-tag.wknd { background: var(--weekend-bg); color: var(--afternoon-color); }
+.pay-tag.ph { background: var(--night-color); color: #fff; }
+.pay-tag.alw { background: var(--accent-dim); color: var(--accent); }
+
+.pay-callout {
+  background: var(--surface-alt);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-top: 12px;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+.pay-callout strong { color: var(--text); }
+.pay-callout.warn {
+  background: var(--weekend-bg);
+  border: 1px solid var(--afternoon-color);
+}
+
+.shift-row-pay {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--accent);
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.week-gross {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-top: 6px;
+}
+
 @media (min-width: 640px) {
   .bottom-nav { max-width: 640px; left: 50%; transform: translateX(-50%); border-radius: 20px 20px 0 0; border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
 }

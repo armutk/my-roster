@@ -288,11 +288,14 @@
     const circumference = 2 * Math.PI * 26;
     const dash = (pct / 100) * circumference;
 
+    const weekPay = thisWeek ? paySummary(thisWeek.shifts) : null;
+
     el.innerHTML = `
       <div class="week-card-main">
         <div class="week-title">${formatShortDate(monday)} – ${formatShortDate(addDays(monday, 6))}</div>
         <div class="week-hours">${hours} <small>/ ${contracted} hrs</small></div>
         <div class="week-note">${note}</div>
+        ${weekPay && weekPay.estimatedGross > 0 ? `<div class="week-gross">${money(weekPay.estimatedGross)} est. gross</div>` : ''}
       </div>
       <svg class="progress-ring" width="64" height="64" viewBox="0 0 64 64">
         <circle cx="32" cy="32" r="26" fill="none" stroke="var(--surface-alt)" stroke-width="7" />
@@ -350,7 +353,15 @@
           <div class="card">
             ${week.shifts.map((s) => {
               const d = parseLocalDate(s.date);
-              return `<div class="${isWeekend(d) ? 'weekend-row' : ''}">${shiftRowHtml(s)}</div>`;
+              const p = payFor(s);
+              const row = shiftRowHtml(s);
+              const withPay = p
+                ? row.replace(
+                    /<div class="shift-row-hours">([^<]*)<\/div>/,
+                    `<div class="shift-row-hours">$1<span class="shift-row-pay">${money(p.estimatedGross)}</span></div>`
+                  )
+                : row;
+              return `<div class="${isWeekend(d) ? 'weekend-row' : ''}">${withPay}</div>`;
             }).join('')}
           </div>
         </div>`;
@@ -466,6 +477,129 @@
       <p class="contract-meta" style="margin-top:10px;">${emp.workplace} · ${emp.employer}<br>${emp.agreement}</p>`;
   }
 
+  /* ================= Pay helpers ================= */
+
+  function money(n) {
+    if (n == null) return 'Needs verification';
+    return '$' + n.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  /** Normalise clause references for the small chip label: "Clause 34.3" -> "cl 34.3". */
+  function clauseChip(text) {
+    if (!text) return '';
+    // Keep subclause markers like "(a)" / "(c)(iii)"; drop descriptive trailing
+    // parentheticals such as "(Shift Allowance — Definitions)".
+    return String(text)
+      .replace(/^Clause\s+/i, 'cl ')
+      .replace(/\s+\([^)]*\s[^)]*\)\s*$/, '')
+      .trim();
+  }
+
+  function payFor(shift) {
+    if (!window.PayEngine || !window.PayRules) return null;
+    try {
+      return window.PayEngine.calculateShift(shift, DATA.shiftTypes);
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function paySummary(shifts) {
+    if (!window.PayEngine || !window.PayRules) return null;
+    try {
+      return window.PayEngine.summarise(shifts, DATA.shiftTypes);
+    } catch (err) {
+      return null;
+    }
+  }
+
+  /** Line-by-line gross breakdown for one shift. */
+  function payBreakdownHtml(pay) {
+    if (!pay) return '';
+    const rows = [];
+
+    rows.push({
+      label: `Ordinary pay — ${pay.paidHours}h × ${money(pay.baseHourlyRate)}`,
+      value: money(pay.ordinaryPay),
+      clause: 'cl 18.3',
+    });
+
+    if (pay.weekendPenalty > 0) {
+      rows.push({ label: 'Weekend penalty (time and a half)', value: money(pay.weekendPenalty), clause: 'cl 48.1' });
+    }
+    if (pay.publicHolidayPenalty > 0) {
+      rows.push({
+        label: `Public holiday penalty — ${pay.publicHolidayName}`,
+        value: money(pay.publicHolidayPenalty),
+        clause: 'cl 56.5(a)',
+      });
+    }
+    if (pay.shiftAllowance && pay.shiftAllowance.amount) {
+      rows.push({
+        label: pay.shiftAllowance.label + (pay.shiftAllowance.verified ? '' : ' *'),
+        value: money(pay.shiftAllowance.amount),
+        clause: pay.shiftAllowance.agreementClause || 'cl 34.3',
+      });
+    }
+    for (const a of pay.otherAllowances || []) {
+      rows.push({ label: a.label, value: money(a.amount), clause: a.agreementClause });
+    }
+    if (pay.missedMealBreak) {
+      rows.push({
+        label: `${pay.missedMealBreak.label} (${pay.missedMealBreak.hours}h at 150%)`,
+        value: money(pay.missedMealBreak.amount),
+        clause: 'cl 44.1(c)',
+      });
+    }
+    if (pay.overtime) {
+      for (const t of pay.overtime.tiers) {
+        rows.push({ label: t.label + ` — ${t.hours}h`, value: money(t.amount), clause: 'cl 49.2(c)' });
+      }
+    }
+
+    const rowHtml = rows
+      .map(
+        (r) => `
+      <div class="pay-line">
+        <span class="pay-line-label">${r.label}${r.clause ? `<span class="pay-clause">${clauseChip(r.clause)}</span>` : ''}</span>
+        <span class="pay-line-value">${r.value}</span>
+      </div>`
+      )
+      .join('');
+
+    const segHtml =
+      pay.segments && pay.segments.length > 1
+        ? `<div class="pay-segments">
+             <div class="pay-seg-title">Hours split across days</div>
+             ${pay.segments
+               .map(
+                 (s) => `<div class="pay-line sub"><span class="pay-line-label">${formatShortDate(parseLocalDate(s.date))} — ${s.hours}h × ${s.multiplier} <span class="pay-clause">${s.basis}</span></span><span class="pay-line-value">${money(s.totalPay)}</span></div>`
+               )
+               .join('')}
+           </div>`
+        : '';
+
+    const noteHtml = (pay.notes || [])
+      .map((n) => `<p class="pay-note">${n}</p>`)
+      .join('');
+    const warnHtml = (pay.warnings || [])
+      .map((w) => `<p class="pay-warning">⚠ ${w}</p>`)
+      .join('');
+
+    return `
+      <div class="pay-breakdown">
+        ${rowHtml}
+        ${segHtml}
+        <div class="pay-line total">
+          <span class="pay-line-label">Estimated gross</span>
+          <span class="pay-line-value">${money(pay.estimatedGross)}</span>
+        </div>
+        ${noteHtml}
+        ${warnHtml}
+        <p class="pay-note">Gross, before tax and superannuation.</p>
+      </div>`;
+  }
+
   /* ================= Day detail sheet ================= */
 
   function openDaySheet(dateKeyStr) {
@@ -480,11 +614,13 @@
     } else {
       const info = shiftTypeInfo(shift.shiftType);
       const timeText = shift.start && shift.end ? `${formatTime12(shift.start)} to ${formatTime12(shift.end)}` : `${info.paidHours} hour shift`;
+      const pay = payFor(shift);
       content.innerHTML = `
         <h2 style="margin:0 0 10px;">${formatFullDate(date)}</h2>
         <div class="next-shift-type" style="background:var(--accent-dim); color:var(--accent); margin-bottom:12px;">${info.label}</div>
         <p style="font-size:1.15rem; font-weight:700; margin:0 0 4px;">${timeText}</p>
-        <p style="color:var(--text-dim); margin:0;">${shift.paidHours} paid hours</p>`;
+        <p style="color:var(--text-dim); margin:0 0 4px;">${shift.paidHours} paid hours</p>
+        ${pay ? payBreakdownHtml(pay) : ''}`;
     }
     document.getElementById('sheetOverlay').classList.add('open');
   }
@@ -500,6 +636,184 @@
     });
   }
 
+  /* ================= Rendering: Pay ================= */
+
+  function payTotalsRows(sum) {
+    const rows = [
+      ['Ordinary pay', sum.ordinaryPay, 'cl 18.3'],
+      ['Shift allowances', sum.shiftAllowances, 'cl 34.3'],
+      ['Weekend penalties', sum.weekendPenalties, 'cl 48.1'],
+      ['Public holiday penalties', sum.publicHolidayPenalties, 'cl 56.5(a)'],
+      ['Other allowances', sum.otherAllowances, ''],
+      ['Meal breaks not taken', sum.missedMealBreaks, 'cl 44.1(c)'],
+      ['Overtime', sum.overtime, 'cl 49.2(c)'],
+    ].filter(([, v]) => v > 0);
+
+    return rows
+      .map(
+        ([label, value, clause]) => `
+      <div class="pay-line">
+        <span class="pay-line-label">${label}${clause ? `<span class="pay-clause">${clauseChip(clause)}</span>` : ''}</span>
+        <span class="pay-line-value">${money(value)}</span>
+      </div>`
+      )
+      .join('');
+  }
+
+  function renderPay() {
+    if (!window.PayEngine || !window.PayRules) {
+      document.getElementById('payTotalCard').innerHTML =
+        '<p style="color:var(--text-dim);">Pay engine unavailable.</p>';
+      return;
+    }
+
+    const R = window.PayRules;
+    const shifts = sortedShifts();
+    const sum = paySummary(shifts);
+
+    // --- Period total ---
+    document.getElementById('payTotalCard').innerHTML = `
+      <div class="pay-hero">
+        <div class="pay-hero-label">Estimated gross pay</div>
+        <div class="pay-hero-value">${money(sum.estimatedGross)}</div>
+        <div class="pay-hero-meta">${sum.shiftCount} shifts · ${sum.rosteredHours} rostered hours</div>
+      </div>
+      ${payTotalsRows(sum)}
+      <p class="pay-note">Estimate only — gross, before tax and superannuation. Excludes ${R.exclusions.length} items listed under Pay Rules Applied.</p>`;
+
+    // --- By week ---
+    const weeks = groupByWeek(shifts);
+    const contracted = DATA.meta.employee.contractedWeeklyHours;
+    document.getElementById('payWeekList').innerHTML = weeks
+      .map((w) => {
+        const ws = paySummary(w.shifts);
+        const diff = ws.rosteredHours - contracted;
+        const diffText =
+          diff === 0
+            ? 'Matches contracted weekly average'
+            : `${diff > 0 ? '+' : ''}${diff} hours vs contracted average`;
+        const flags = window.PayEngine.assessOvertimeIndicators(w.shifts, ws.rosteredHours);
+        return `
+        <div class="card fortnight-card">
+          <div class="fn-title">${formatShortDate(w.monday)} – ${formatShortDate(addDays(w.monday, 6))}</div>
+          <div class="fn-meta">${ws.shiftCount} shifts · ${ws.rosteredHours} rostered hours</div>
+          <div class="pay-week-amount">${money(ws.estimatedGross)}</div>
+          <div class="pay-hours-compare">
+            <span>Contracted average: ${contracted} h</span>
+            <span>Actual rostered: ${ws.rosteredHours} h</span>
+            <span class="${diff > 0 ? 'over' : diff < 0 ? 'under' : ''}">${diffText}</span>
+          </div>
+          ${flags.map((f) => `<p class="pay-warning">⚠ ${f.text}</p>`).join('')}
+        </div>`;
+      })
+      .join('');
+
+    // --- By fortnight ---
+    const fortnights = groupByFortnight(weeks);
+    document.getElementById('payFortnightList').innerHTML = fortnights
+      .map((fn) => {
+        const fnShifts = fn.weeks.flatMap((w) => w.shifts);
+        const fs = paySummary(fnShifts);
+        const ftThreshold = R.overtime.referenceThresholds.fullTimeFortnightHours;
+        return `
+        <div class="card fortnight-card">
+          <div class="fn-title">${formatShortDate(fn.start)} – ${formatShortDate(fn.end)}</div>
+          <div class="fn-meta">${fs.shiftCount} shifts · ${fs.rosteredHours} rostered hours</div>
+          <div class="pay-week-amount">${money(fs.estimatedGross)}</div>
+          <div class="pay-hours-compare">
+            <span>Contracted average: ${contracted * 2} h per fortnight</span>
+            <span>Full-time ordinary hours: ${ftThreshold} h (cl 42.1)</span>
+          </div>
+        </div>`;
+      })
+      .join('');
+
+    // --- Every shift ---
+    document.getElementById('payShiftList').innerHTML = weeks
+      .map((week) => {
+        const ws = paySummary(week.shifts);
+        return `
+        <div class="roster-week-group">
+          <div class="roster-week-header">
+            <span class="rw-title">${formatShortDate(week.monday)} – ${formatShortDate(addDays(week.monday, 6))}</span>
+            <span class="rw-meta">${money(ws.estimatedGross)}</span>
+          </div>
+          <div class="card">
+            ${week.shifts
+              .map((s) => {
+                const p = payFor(s);
+                const d = parseLocalDate(s.date);
+                const tags = [];
+                if (p.publicHolidayPenalty > 0) tags.push('<span class="pay-tag ph">Public holiday</span>');
+                else if (p.weekendPenalty > 0) tags.push('<span class="pay-tag wknd">Weekend</span>');
+                if (p.shiftAllowance && p.shiftAllowance.amount) tags.push('<span class="pay-tag alw">Shift allowance</span>');
+                return `
+                <div class="shift-row ${isWeekend(d) ? 'weekend-row' : ''}" data-date="${s.date}">
+                  <div class="shift-chip ${s.shiftType}">${SHIFT_BADGE[s.shiftType] || '?'}</div>
+                  <div class="shift-row-info">
+                    <div class="shift-row-day">${DOW_SHORT[d.getDay()]}, ${formatShortDate(d)}</div>
+                    <div class="shift-row-time">${s.paidHours}h · ${tags.join(' ') || 'Ordinary'}</div>
+                  </div>
+                  <div class="pay-row-amount">${money(p.estimatedGross)}</div>
+                </div>`;
+              })
+              .join('')}
+          </div>
+        </div>`;
+      })
+      .join('');
+    attachRowHandlers(document.getElementById('payShiftList'));
+
+    // --- Pay rules reference ---
+    const rate = R.baseHourlyRateOn(shifts.length ? shifts[0].date : '2026-09-01');
+    const unverified = [];
+    if (R.shiftAllowances.nightSunday.verified === false)
+      unverified.push({ label: 'Sunday night shift allowance', note: R.shiftAllowances.nightSunday.verificationNote });
+    if (R.shiftDefinitions.morning.verified === false)
+      unverified.push({ label: 'Morning shift qualifying window', note: R.shiftDefinitions.morning.verificationNote });
+
+    document.getElementById('payRulesCard').innerHTML = `
+      <p class="contract-meta" style="margin-top:0;"><strong>${R.AGREEMENT_META.title}</strong><br>
+      Operative ${R.AGREEMENT_META.operativeFrom} · nominal expiry ${R.AGREEMENT_META.nominalExpiry}</p>
+
+      <div class="pay-line"><span class="pay-line-label">Base hourly rate<span class="pay-clause">cl 18.3 · App 2</span></span><span class="pay-line-value">${money(rate.rate)}</span></div>
+      <div class="pay-line sub"><span class="pay-line-label">From weekly salary ${money(rate.weeklySalary)} ÷ 38, effective ${rate.effectiveFrom}</span><span class="pay-line-value"></span></div>
+      <div class="pay-line"><span class="pay-line-label">Afternoon shift allowance<span class="pay-clause">cl 34.3</span></span><span class="pay-line-value">${money(R.rateOn(R.shiftAllowances.afternoon.table, '2026-09-01').amount)} / shift</span></div>
+      <div class="pay-line"><span class="pay-line-label">Night shift allowance (Mon–Thu)<span class="pay-clause">cl 34.3(c)</span></span><span class="pay-line-value">${money(R.rateOn(R.shiftAllowances.nightMonThu.table, '2026-09-01').amount)} / shift</span></div>
+      <div class="pay-line"><span class="pay-line-label">Night shift allowance (Fri/Sat)<span class="pay-clause">cl 34.3(c)</span></span><span class="pay-line-value">${money(R.rateOn(R.shiftAllowances.nightFriSat.table, '2026-09-01').amount)} / shift</span></div>
+      <div class="pay-line"><span class="pay-line-label">Saturday &amp; Sunday ordinary hours<span class="pay-clause">cl 48.1</span></span><span class="pay-line-value">150%</span></div>
+      <div class="pay-line"><span class="pay-line-label">Public holiday (Mon–Fri)<span class="pay-clause">cl 56.5(a)(i)</span></span><span class="pay-line-value">200%</span></div>
+      <div class="pay-line"><span class="pay-line-label">Public holiday (Sat/Sun)<span class="pay-clause">cl 56.5(a)(ii)</span></span><span class="pay-line-value">250%</span></div>
+      <div class="pay-line"><span class="pay-line-label">Overtime Mon–Fri<span class="pay-clause">cl 49.2(c)(i)</span></span><span class="pay-line-value">150% then 200%</span></div>
+      <div class="pay-line"><span class="pay-line-label">Overtime Sat/Sun<span class="pay-clause">cl 49.2(c)(ii)</span></span><span class="pay-line-value">200%</span></div>
+
+      <div class="pay-callout">
+        <strong>Shift allowances are flat amounts per shift</strong>, not a percentage — they do not scale with shift length (cl 34.3, Appendix 2). Only one shift allowance is paid per shift (cl 34.2).
+      </div>
+
+      <div class="pay-callout">
+        <strong>Hours above 32 are not treated as overtime.</strong> ${R.overtime.triggers.notATrigger}
+        Overtime is applied only when explicitly recorded against a shift.
+      </div>
+
+      ${
+        unverified.length
+          ? `<div class="pay-callout warn"><strong>Needs verification</strong>${unverified
+              .map((u) => `<p style="margin:6px 0 0;">${u.label} — ${u.note}</p>`)
+              .join('')}</div>`
+          : ''
+      }
+
+      <div class="pay-callout">
+        <strong>Public holidays applied</strong>
+        ${R.publicHolidays.dates
+          .map((h) => `<p style="margin:6px 0 0;">${h.date} — ${h.name}${h.note ? `<br><span style="opacity:0.75;">${h.note}</span>` : ''}</p>`)
+          .join('')}
+      </div>
+
+      <p class="contract-meta"><strong>Not included in these estimates:</strong><br>${R.exclusions.join(' · ')}</p>`;
+  }
+
   /* ================= Navigation ================= */
 
   function setActiveView(name) {
@@ -511,6 +825,7 @@
     if (name === 'roster') renderRoster();
     if (name === 'calendar') renderCalendar();
     if (name === 'stats') renderStats();
+    if (name === 'pay') renderPay();
     window.scrollTo({ top: 0 });
   }
 

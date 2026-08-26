@@ -1,10 +1,12 @@
-const CACHE_NAME = 'my-roster-v1';
+const CACHE_NAME = 'my-roster-v2';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
   './src/css/style.css',
   './src/js/app.js',
+  './src/js/payRules.js',
+  './src/js/payEngine.js',
   './src/data/roster.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
