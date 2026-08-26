@@ -552,6 +552,28 @@ main {
   line-height: 1.5;
 }
 
+.note-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--night-color);
+  background: color-mix(in srgb, var(--night-color) 14%, transparent);
+  padding: 1px 7px;
+  border-radius: 999px;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
+.shift-note {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--night-color);
+  background: color-mix(in srgb, var(--night-color) 14%, transparent);
+  padding: 4px 11px;
+  border-radius: 999px;
+  margin: 0 0 12px;
+}
+
 /* ---------- Pay ---------- */
 
 .pay-hero {

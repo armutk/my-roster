@@ -4,9 +4,13 @@
   /* ---------- Embedded fallback data (used if roster.json can't be fetched, e.g. opened via file://) ---------- */
   const ROSTER_FALLBACK = {
     "meta": {
-      "periodLabel": "September - October 2026",
+      "periodLabel": "August - October 2026",
+      "source": "RosterOn ESS (Mercy Health) — https://mha.allocate-cloud.com.au/MHAPROD/Mobile/",
+      "sourceRetrieved": "2026-08-26",
+      "unit": "WMH Neonatal Postnatal Support Program",
       "employee": {
         "position": "Registered Nurse",
+        "role": "Neonatal Postnatal Support Nurse",
         "classification": "Registered Nurse Grade 2, Year 7, YP8",
         "employer": "Mercy Hospitals Victoria Ltd / Mercy Health",
         "workplace": "Werribee Mercy Hospital",
@@ -22,23 +26,26 @@
       "night": { "label": "Night Shift", "start": null, "end": null, "paidHours": 10 }
     },
     "shifts": [
-      { "date": "2026-09-02", "day": "Wednesday", "shiftType": "day", "start": "07:00", "end": "15:30", "paidHours": 8 },
-      { "date": "2026-09-03", "day": "Thursday",  "shiftType": "day", "start": "07:00", "end": "15:30", "paidHours": 8 },
-      { "date": "2026-09-04", "day": "Friday",    "shiftType": "day", "start": "07:00", "end": "15:30", "paidHours": 8 },
+      { "date": "2026-08-26", "day": "Wednesday", "shiftType": "day",       "start": "07:00", "end": "15:30", "paidHours": 8, "note": "Buddy Shift" },
+      { "date": "2026-08-27", "day": "Thursday",  "shiftType": "day",       "start": "07:00", "end": "15:30", "paidHours": 8, "note": "Buddy Shift" },
+      { "date": "2026-08-28", "day": "Friday",    "shiftType": "day",       "start": "07:00", "end": "15:30", "paidHours": 8, "note": "Buddy Shift" },
+      { "date": "2026-09-02", "day": "Wednesday", "shiftType": "afternoon", "start": "13:00", "end": "21:30", "paidHours": 8, "note": "Buddy Shift" },
+      { "date": "2026-09-03", "day": "Thursday",  "shiftType": "afternoon", "start": "13:00", "end": "21:30", "paidHours": 8 },
+      { "date": "2026-09-04", "day": "Friday",    "shiftType": "afternoon", "start": "13:00", "end": "21:30", "paidHours": 8 },
       { "date": "2026-09-07", "day": "Monday",    "shiftType": "afternoon", "start": "13:00", "end": "21:30", "paidHours": 8 },
-      { "date": "2026-09-08", "day": "Tuesday",   "shiftType": "day", "start": "07:00", "end": "15:30", "paidHours": 8 },
-      { "date": "2026-09-09", "day": "Wednesday", "shiftType": "day", "start": "07:00", "end": "15:30", "paidHours": 8 },
-      { "date": "2026-09-12", "day": "Saturday",  "shiftType": "day", "start": "07:00", "end": "15:30", "paidHours": 8 },
+      { "date": "2026-09-08", "day": "Tuesday",   "shiftType": "day",       "start": "07:00", "end": "15:30", "paidHours": 8 },
+      { "date": "2026-09-09", "day": "Wednesday", "shiftType": "day",       "start": "07:00", "end": "15:30", "paidHours": 8 },
+      { "date": "2026-09-12", "day": "Saturday",  "shiftType": "day",       "start": "07:00", "end": "15:30", "paidHours": 8 },
       { "date": "2026-09-13", "day": "Sunday",    "shiftType": "afternoon", "start": "13:00", "end": "21:30", "paidHours": 8 },
       { "date": "2026-09-14", "day": "Monday",    "shiftType": "afternoon", "start": "13:00", "end": "21:30", "paidHours": 8 },
       { "date": "2026-09-16", "day": "Wednesday", "shiftType": "afternoon", "start": "13:00", "end": "21:30", "paidHours": 8 },
-      { "date": "2026-09-19", "day": "Saturday",  "shiftType": "day", "start": "07:00", "end": "15:30", "paidHours": 8 },
-      { "date": "2026-09-21", "day": "Monday",    "shiftType": "day", "start": "07:00", "end": "15:30", "paidHours": 8 },
-      { "date": "2026-09-22", "day": "Tuesday",   "shiftType": "day", "start": "07:00", "end": "15:30", "paidHours": 8 },
+      { "date": "2026-09-19", "day": "Saturday",  "shiftType": "day",       "start": "07:00", "end": "15:30", "paidHours": 8 },
+      { "date": "2026-09-21", "day": "Monday",    "shiftType": "day",       "start": "07:00", "end": "15:30", "paidHours": 8 },
+      { "date": "2026-09-22", "day": "Tuesday",   "shiftType": "day",       "start": "07:00", "end": "15:30", "paidHours": 8 },
       { "date": "2026-09-24", "day": "Thursday",  "shiftType": "afternoon", "start": "13:00", "end": "21:30", "paidHours": 8 },
       { "date": "2026-09-25", "day": "Friday",    "shiftType": "afternoon", "start": "13:00", "end": "21:30", "paidHours": 8 },
-      { "date": "2026-09-29", "day": "Tuesday",   "shiftType": "day", "start": "07:00", "end": "15:30", "paidHours": 8 },
-      { "date": "2026-09-30", "day": "Wednesday", "shiftType": "day", "start": "07:00", "end": "15:30", "paidHours": 8 },
+      { "date": "2026-09-29", "day": "Tuesday",   "shiftType": "day",       "start": "07:00", "end": "15:30", "paidHours": 8 },
+      { "date": "2026-09-30", "day": "Wednesday", "shiftType": "day",       "start": "07:00", "end": "15:30", "paidHours": 8 },
       { "date": "2026-10-01", "day": "Thursday",  "shiftType": "afternoon", "start": "13:00", "end": "21:30", "paidHours": 8 },
       { "date": "2026-10-02", "day": "Friday",    "shiftType": "afternoon", "start": "13:00", "end": "21:30", "paidHours": 8 }
     ]
@@ -315,7 +322,7 @@
       <div class="shift-row" data-date="${shift.date}">
         <div class="shift-chip ${shift.shiftType}">${SHIFT_BADGE[shift.shiftType] || '?'}</div>
         <div class="shift-row-info">
-          <div class="shift-row-day">${DOW_SHORT[date.getDay()]}, ${formatShortDate(date)}${weekend ? '<span class="weekend-tag">Weekend</span>' : ''}</div>
+          <div class="shift-row-day">${DOW_SHORT[date.getDay()]}, ${formatShortDate(date)}${weekend ? '<span class="weekend-tag">Weekend</span>' : ''}${shift.note ? `<span class="note-tag">${shift.note}</span>` : ''}</div>
           <div class="shift-row-time">${timeText}</div>
         </div>
         ${showHours ? `<div class="shift-row-hours">${shift.paidHours}h</div>` : ''}
@@ -618,6 +625,7 @@
       content.innerHTML = `
         <h2 style="margin:0 0 10px;">${formatFullDate(date)}</h2>
         <div class="next-shift-type" style="background:var(--accent-dim); color:var(--accent); margin-bottom:12px;">${info.label}</div>
+        ${shift.note ? `<div class="shift-note">${shift.note}</div>` : ''}
         <p style="font-size:1.15rem; font-weight:700; margin:0 0 4px;">${timeText}</p>
         <p style="color:var(--text-dim); margin:0 0 4px;">${shift.paidHours} paid hours</p>
         ${pay ? payBreakdownHtml(pay) : ''}`;
