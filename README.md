@@ -49,6 +49,20 @@ under the wrong shift type (19 shifts / 152 h on paper vs 22 / 176 h in RosterOn
    GitHub Pages rebuilds in about a minute. Installed phone apps pick it up on
    next open with a connection.
 
+### One-click grab (optional)
+
+`tools/bookmarklet.txt` is a bookmarklet that does step 2 for you. Click it on
+the RosterOn roster page and it copies the roster to the clipboard, confirming
+how many shifts it found and their date range — so you know it grabbed
+something valid before pasting. Build it with `node tools/bookmarklet.js`;
+install instructions are printed.
+
+**Why not a Chrome extension?** An extension could go further and push straight
+to GitHub, but it would need a GitHub token stored in the browser, has to be
+loaded unpacked (Chrome nags and can disable it), and doesn't work on Android
+Chrome at all. For a roster that changes every few weeks, a bookmarklet gets
+most of the benefit at none of that cost.
+
 ### Doing it with Claude
 
 Leave the RosterOn roster page open in Chrome and ask Claude to update the
