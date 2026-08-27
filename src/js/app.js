@@ -39,7 +39,7 @@
       { "date": "2026-09-13", "day": "Sunday",    "shiftType": "afternoon", "start": "13:00", "end": "21:30", "paidHours": 8 },
       { "date": "2026-09-14", "day": "Monday",    "shiftType": "afternoon", "start": "13:00", "end": "21:30", "paidHours": 8 },
       { "date": "2026-09-16", "day": "Wednesday", "shiftType": "afternoon", "start": "13:00", "end": "21:30", "paidHours": 8 },
-      { "date": "2026-09-19", "day": "Saturday",  "shiftType": "day",       "start": "07:00", "end": "15:30", "paidHours": 8 },
+      { "date": "2026-09-19", "day": "Saturday",  "shiftType": "afternoon", "start": "13:00", "end": "21:30", "paidHours": 8 },
       { "date": "2026-09-21", "day": "Monday",    "shiftType": "day",       "start": "07:00", "end": "15:30", "paidHours": 8 },
       { "date": "2026-09-22", "day": "Tuesday",   "shiftType": "day",       "start": "07:00", "end": "15:30", "paidHours": 8 },
       { "date": "2026-09-24", "day": "Thursday",  "shiftType": "afternoon", "start": "13:00", "end": "21:30", "paidHours": 8 },
@@ -64,7 +64,72 @@
   const SHIFT_BADGE = { day: 'D', afternoon: 'A', night: 'N' };
 
   let DATA = null;
+  let BASE_SHIFTS = [];      // as published by RosterOn / roster.json
   let calendarCursor = null; // {year, month} month is 0-indexed, for the Calendar view
+
+  /* ================= Local edits =================
+     roster.json stays the RosterOn-sourced base. Edits made in the app are kept
+     separately in localStorage and layered on top, so:
+       - re-importing from RosterOn never silently destroys a manual fix, and
+       - any edit can be reverted back to what RosterOn actually says.
+     Shape: { "YYYY-MM-DD": {shiftType,start,end,paidHours,note} | {deleted:true} } */
+
+  const OVERRIDES_KEY = 'myroster-overrides';
+
+  function loadOverrides() {
+    try {
+      return JSON.parse(localStorage.getItem(OVERRIDES_KEY) || '{}');
+    } catch (err) {
+      return {};
+    }
+  }
+
+  function saveOverrides(o) {
+    try {
+      localStorage.setItem(OVERRIDES_KEY, JSON.stringify(o));
+    } catch (err) {
+      /* private mode / storage disabled — edits just won't persist */
+    }
+  }
+
+  function applyOverrides(base) {
+    const o = loadOverrides();
+    const byDate = new Map(base.map((s) => [s.date, { ...s }]));
+
+    for (const [date, ov] of Object.entries(o)) {
+      if (ov && ov.deleted) {
+        byDate.delete(date);
+        continue;
+      }
+      const existing = byDate.get(date);
+      const merged = { ...(existing || {}), ...ov, date, edited: true };
+      if (!existing) merged.addedLocally = true;
+      merged.day = DOW_LONG[parseLocalDate(date).getDay()];
+      byDate.set(date, merged);
+    }
+    return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  /** True where the local copy differs from what RosterOn published. */
+  function hasLocalEdits() {
+    return Object.keys(loadOverrides()).length > 0;
+  }
+
+  function rebuildShifts() {
+    DATA.shifts = applyOverrides(BASE_SHIFTS);
+  }
+
+  function refreshAll() {
+    rebuildShifts();
+    tick();
+    const active = document.querySelector('.nav-btn.active');
+    const view = active ? active.getAttribute('data-view') : 'home';
+    if (view === 'roster') renderRoster();
+    if (view === 'calendar') renderCalendar();
+    if (view === 'stats') renderStats();
+    if (view === 'pay') renderPay();
+    renderEditBanner();
+  }
 
   /* ================= Date helpers ================= */
 
@@ -322,7 +387,7 @@
       <div class="shift-row" data-date="${shift.date}">
         <div class="shift-chip ${shift.shiftType}">${SHIFT_BADGE[shift.shiftType] || '?'}</div>
         <div class="shift-row-info">
-          <div class="shift-row-day">${DOW_SHORT[date.getDay()]}, ${formatShortDate(date)}${weekend ? '<span class="weekend-tag">Weekend</span>' : ''}${shift.note ? `<span class="note-tag">${shift.note}</span>` : ''}</div>
+          <div class="shift-row-day">${DOW_SHORT[date.getDay()]}, ${formatShortDate(date)}${weekend ? '<span class="weekend-tag">Weekend</span>' : ''}${shift.note ? `<span class="note-tag">${shift.note}</span>` : ''}${shift.edited ? '<span class="edited-tag">Edited</span>' : ''}</div>
           <div class="shift-row-time">${timeText}</div>
         </div>
         ${showHours ? `<div class="shift-row-hours">${shift.paidHours}h</div>` : ''}
@@ -617,24 +682,205 @@
     if (!shift) {
       content.innerHTML = `
         <h2 style="margin:0 0 6px;">${formatFullDate(date)}</h2>
-        <p style="color:var(--text-dim); margin:0;">Day off — no shift rostered.</p>`;
+        <p style="color:var(--text-dim); margin:0 0 16px;">Day off — no shift rostered.</p>
+        <div class="edit-actions"><button class="btn primary" id="sheetAdd">Add a shift</button></div>`;
+      document.getElementById('sheetAdd').addEventListener('click', () => openEditSheet(dateKeyStr));
     } else {
       const info = shiftTypeInfo(shift.shiftType);
       const timeText = shift.start && shift.end ? `${formatTime12(shift.start)} to ${formatTime12(shift.end)}` : `${info.paidHours} hour shift`;
       const pay = payFor(shift);
+      const baseShift = BASE_SHIFTS.find((s) => s.date === dateKeyStr);
+      let editedNote = '';
+      if (shift.addedLocally) {
+        editedNote = `<div class="edited-banner">Added on this device — not in the published roster.</div>`;
+      } else if (shift.edited && baseShift) {
+        editedNote = `<div class="edited-banner">Edited on this device. Roster says: ${shiftTypeInfo(baseShift.shiftType).label}, ${formatTime12(baseShift.start)}–${formatTime12(baseShift.end)}.</div>`;
+      }
+
       content.innerHTML = `
         <h2 style="margin:0 0 10px;">${formatFullDate(date)}</h2>
         <div class="next-shift-type" style="background:var(--accent-dim); color:var(--accent); margin-bottom:12px;">${info.label}</div>
         ${shift.note ? `<div class="shift-note">${shift.note}</div>` : ''}
+        ${editedNote}
         <p style="font-size:1.15rem; font-weight:700; margin:0 0 4px;">${timeText}</p>
         <p style="color:var(--text-dim); margin:0 0 4px;">${shift.paidHours} paid hours</p>
-        ${pay ? payBreakdownHtml(pay) : ''}`;
+        ${pay ? payBreakdownHtml(pay) : ''}
+        <div class="edit-actions"><button class="btn" id="sheetEdit">Edit shift</button></div>`;
+      document.getElementById('sheetEdit').addEventListener('click', () => openEditSheet(dateKeyStr));
     }
     document.getElementById('sheetOverlay').classList.add('open');
   }
 
   function closeSheet() {
     document.getElementById('sheetOverlay').classList.remove('open');
+  }
+
+  /* ================= Editing ================= */
+
+  /** Paid hours implied by the times, less the cl 44.1(a) 30-min unpaid meal break. */
+  function impliedPaidHours(start, end) {
+    const [sh, sm] = start.split(':').map(Number);
+    const [eh, em] = end.split(':').map(Number);
+    let mins = eh * 60 + em - (sh * 60 + sm);
+    if (mins <= 0) mins += 24 * 60;
+    return Math.round((mins / 60 - 0.5) * 100) / 100;
+  }
+
+  function openEditSheet(dateKeyStr) {
+    const shift = DATA.shifts.find((s) => s.date === dateKeyStr);
+    const base = BASE_SHIFTS.find((s) => s.date === dateKeyStr);
+    const date = parseLocalDate(dateKeyStr);
+    const isNew = !shift;
+    const cur = shift || { shiftType: 'day', ...DATA.shiftTypes.day, note: '' };
+
+    const typeOptions = Object.entries(DATA.shiftTypes)
+      .map(([k, v]) => `<option value="${k}"${k === cur.shiftType ? ' selected' : ''}>${v.label}</option>`)
+      .join('');
+
+    document.getElementById('sheetContent').innerHTML = `
+      <h2 style="margin:0 0 4px;">${isNew ? 'Add shift' : 'Edit shift'}</h2>
+      <p style="color:var(--text-dim); margin:0 0 16px; font-size:0.9rem;">${formatFullDate(date)}</p>
+
+      <label class="field">
+        <span>Shift type</span>
+        <select id="editType">${typeOptions}</select>
+      </label>
+
+      <div class="field-row">
+        <label class="field"><span>Start</span><input type="time" id="editStart" value="${cur.start || '07:00'}"></label>
+        <label class="field"><span>Finish</span><input type="time" id="editEnd" value="${cur.end || '15:30'}"></label>
+      </div>
+
+      <label class="field">
+        <span>Paid hours</span>
+        <input type="number" id="editHours" step="0.25" min="0" max="24" value="${cur.paidHours != null ? cur.paidHours : 8}">
+        <small id="editHoursHint"></small>
+      </label>
+
+      <label class="field">
+        <span>Note <em>(optional)</em></span>
+        <input type="text" id="editNote" maxlength="40" placeholder="e.g. Buddy Shift" value="${(cur.note || '').replace(/"/g, '&quot;')}">
+      </label>
+
+      <div id="editPreview" class="edit-preview"></div>
+
+      <div class="edit-actions">
+        <button class="btn primary" id="editSave">${isNew ? 'Add shift' : 'Save changes'}</button>
+        ${!isNew ? `<button class="btn danger" id="editDelete">Delete shift</button>` : ''}
+        ${base && shift && shift.edited ? `<button class="btn" id="editRevert">Revert to roster</button>` : ''}
+        <button class="btn" id="editCancel">Cancel</button>
+      </div>`;
+
+    const typeEl = document.getElementById('editType');
+    const startEl = document.getElementById('editStart');
+    const endEl = document.getElementById('editEnd');
+    const hoursEl = document.getElementById('editHours');
+    const hintEl = document.getElementById('editHoursHint');
+
+    // Live pay preview so the cost impact of a change is visible before saving.
+    function updatePreview() {
+      const draft = {
+        date: dateKeyStr,
+        shiftType: typeEl.value,
+        start: startEl.value,
+        end: endEl.value,
+        paidHours: Number(hoursEl.value) || 0,
+      };
+      const implied = impliedPaidHours(draft.start, draft.end);
+      hintEl.textContent = `${implied}h implied by these times (30 min unpaid meal break)`;
+      hintEl.className = Math.abs(implied - draft.paidHours) > 0.01 ? 'hint warn' : 'hint';
+
+      const pay = payFor(draft);
+      if (!pay) { document.getElementById('editPreview').innerHTML = ''; return; }
+      const parts = [];
+      if (pay.weekendPenalty > 0) parts.push(`weekend ${money(pay.weekendPenalty)}`);
+      if (pay.publicHolidayPenalty > 0) parts.push(`public holiday ${money(pay.publicHolidayPenalty)}`);
+      if (pay.shiftAllowance && pay.shiftAllowance.amount) parts.push(`${pay.shiftAllowance.label.toLowerCase()} ${money(pay.shiftAllowance.amount)}`);
+
+      const old = shift ? payFor(shift) : null;
+      const delta = old ? round2(pay.estimatedGross - old.estimatedGross) : null;
+      const deltaText = delta ? `<span class="delta ${delta > 0 ? 'up' : 'down'}">${delta > 0 ? '+' : ''}${money(delta)}</span>` : '';
+
+      document.getElementById('editPreview').innerHTML = `
+        <div class="ep-label">Estimated gross</div>
+        <div class="ep-value">${money(pay.estimatedGross)} ${deltaText}</div>
+        <div class="ep-parts">${parts.length ? 'Includes ' + parts.join(' · ') : 'Ordinary hours, no penalties'}</div>`;
+    }
+
+    function round2(n) { return Math.round((n + Number.EPSILON) * 100) / 100; }
+
+    typeEl.addEventListener('change', () => {
+      const def = DATA.shiftTypes[typeEl.value];
+      if (def && def.start && def.end) {
+        startEl.value = def.start;
+        endEl.value = def.end;
+        hoursEl.value = def.paidHours;
+      }
+      updatePreview();
+    });
+    [startEl, endEl].forEach((el) =>
+      el.addEventListener('change', () => {
+        hoursEl.value = impliedPaidHours(startEl.value, endEl.value);
+        updatePreview();
+      })
+    );
+    hoursEl.addEventListener('input', updatePreview);
+    updatePreview();
+
+    document.getElementById('editSave').addEventListener('click', () => {
+      const o = loadOverrides();
+      const entry = {
+        shiftType: typeEl.value,
+        start: startEl.value,
+        end: endEl.value,
+        paidHours: Number(hoursEl.value) || 0,
+      };
+      const note = document.getElementById('editNote').value.trim();
+      if (note) entry.note = note;
+      o[dateKeyStr] = entry;
+      saveOverrides(o);
+      closeSheet();
+      refreshAll();
+    });
+
+    const delBtn = document.getElementById('editDelete');
+    if (delBtn) {
+      delBtn.addEventListener('click', () => {
+        if (!confirm(`Delete the shift on ${formatFullDate(date)}?`)) return;
+        const o = loadOverrides();
+        if (BASE_SHIFTS.some((s) => s.date === dateKeyStr)) o[dateKeyStr] = { deleted: true };
+        else delete o[dateKeyStr];
+        saveOverrides(o);
+        closeSheet();
+        refreshAll();
+      });
+    }
+
+    const revertBtn = document.getElementById('editRevert');
+    if (revertBtn) {
+      revertBtn.addEventListener('click', () => {
+        const o = loadOverrides();
+        delete o[dateKeyStr];
+        saveOverrides(o);
+        closeSheet();
+        refreshAll();
+      });
+    }
+
+    document.getElementById('editCancel').addEventListener('click', () => openDaySheet(dateKeyStr));
+    document.getElementById('sheetOverlay').classList.add('open');
+  }
+
+  /** Banner shown while the local copy differs from the published roster. */
+  function renderEditBanner() {
+    const el = document.getElementById('editBanner');
+    if (!el) return;
+    const o = loadOverrides();
+    const n = Object.keys(o).length;
+    if (!n) { el.classList.remove('show'); return; }
+    el.classList.add('show');
+    el.querySelector('.eb-text').textContent =
+      `${n} local ${n === 1 ? 'change' : 'changes'} to the roster, saved on this device only.`;
   }
 
   function attachRowHandlers(container) {
@@ -925,6 +1171,8 @@
   async function init() {
     initTheme();
     DATA = await loadData();
+    BASE_SHIFTS = DATA.shifts.map((s) => ({ ...s }));
+    rebuildShifts();
 
     const now = new Date();
     calendarCursor = { year: now.getFullYear(), month: now.getMonth() };
@@ -948,6 +1196,14 @@
     });
 
     initInstallPrompt();
+    renderEditBanner();
+
+    document.getElementById('editBannerReset').addEventListener('click', () => {
+      const n = Object.keys(loadOverrides()).length;
+      if (!confirm(`Discard ${n} local ${n === 1 ? 'change' : 'changes'} and go back to the published roster?`)) return;
+      saveOverrides({});
+      refreshAll();
+    });
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

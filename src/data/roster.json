@@ -35,7 +35,7 @@
     { "date": "2026-09-13", "day": "Sunday",    "shiftType": "afternoon", "start": "13:00", "end": "21:30", "paidHours": 8 },
     { "date": "2026-09-14", "day": "Monday",    "shiftType": "afternoon", "start": "13:00", "end": "21:30", "paidHours": 8 },
     { "date": "2026-09-16", "day": "Wednesday", "shiftType": "afternoon", "start": "13:00", "end": "21:30", "paidHours": 8 },
-    { "date": "2026-09-19", "day": "Saturday",  "shiftType": "day",       "start": "07:00", "end": "15:30", "paidHours": 8 },
+    { "date": "2026-09-19", "day": "Saturday",  "shiftType": "afternoon", "start": "13:00", "end": "21:30", "paidHours": 8 },
     { "date": "2026-09-21", "day": "Monday",    "shiftType": "day",       "start": "07:00", "end": "15:30", "paidHours": 8 },
     { "date": "2026-09-22", "day": "Tuesday",   "shiftType": "day",       "start": "07:00", "end": "15:30", "paidHours": 8 },
     { "date": "2026-09-24", "day": "Thursday",  "shiftType": "afternoon", "start": "13:00", "end": "21:30", "paidHours": 8 },

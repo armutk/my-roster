@@ -574,6 +574,147 @@ main {
   margin: 0 0 12px;
 }
 
+/* ---------- Editing ---------- */
+
+.field { display: block; margin-bottom: 14px; }
+.field > span {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.field > span em { font-weight: 400; text-transform: none; letter-spacing: 0; }
+
+.field input,
+.field select {
+  width: 100%;
+  font: inherit;
+  font-size: 1rem;
+  padding: 11px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text);
+  -webkit-appearance: none;
+  appearance: none;
+}
+.field select {
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-dim) 50%), linear-gradient(135deg, var(--text-dim) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 34px;
+}
+.field input:focus,
+.field select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+.field-row { display: flex; gap: 12px; }
+.field-row .field { flex: 1; }
+
+.hint { display: block; font-size: 0.75rem; color: var(--text-dim); margin-top: 5px; }
+.hint.warn { color: var(--afternoon-color); font-weight: 600; }
+
+.edit-preview {
+  background: var(--surface-alt);
+  border-radius: var(--radius-sm);
+  padding: 13px 15px;
+  margin: 4px 0 16px;
+}
+.ep-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+.ep-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--accent);
+  margin: 2px 0 3px;
+  font-variant-numeric: tabular-nums;
+}
+.ep-value .delta {
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.ep-value .delta.up { color: #0a7d3f; background: #0a7d3f1f; }
+.ep-value .delta.down { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); }
+:root[data-theme="dark"] .ep-value .delta.up,
+:root:not([data-theme="light"]) .ep-value .delta.up { color: #5fd694; background: #5fd6941f; }
+.ep-parts { font-size: 0.78rem; color: var(--text-dim); line-height: 1.45; }
+
+.edit-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.btn {
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 13px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text);
+  cursor: pointer;
+  width: 100%;
+}
+.btn.primary { background: var(--accent); color: var(--accent-contrast); border-color: var(--accent); }
+.btn.danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 35%, transparent); background: transparent; }
+
+.edited-banner {
+  background: color-mix(in srgb, var(--afternoon-color) 13%, transparent);
+  border-left: 3px solid var(--afternoon-color);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 9px 12px;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+  line-height: 1.45;
+}
+
+.edit-banner {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: color-mix(in srgb, var(--afternoon-color) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--afternoon-color) 40%, transparent);
+  border-radius: var(--radius-md);
+  padding: 11px 14px;
+  margin-bottom: 16px;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+.edit-banner.show { display: flex; }
+.edit-banner button {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-weight: 700;
+  font-size: 0.78rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.edited-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--afternoon-color);
+  background: color-mix(in srgb, var(--afternoon-color) 15%, transparent);
+  padding: 1px 7px;
+  border-radius: 999px;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
 /* ---------- Pay ---------- */
 
 .pay-hero {
