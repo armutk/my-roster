@@ -1,3 +1,7 @@
+# Real RosterOn ESS output captured 2026-08-26. Historical snapshot — do not edit to match
+# the current roster. It predates the 19 Sep 2026 AM->PM move, so importing it reports
+# exactly one CHANGED line. That is the expected result and exercises the diff.
+
 Wed 26/08/2026 - WMH Neonatal Postnatal Support Program
 07:00 - 15:30
 Buddy Shift
