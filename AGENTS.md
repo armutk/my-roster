@@ -196,13 +196,17 @@ than asserting success**:
   `globalThis`, so `eval(fs.readFileSync(...))` works). Hand-check known values:
   weekday day $414.32 · weekday afternoon $450.92 · Saturday day $621.48 ·
   Saturday/Sunday afternoon $658.08 · public holiday afternoon $865.24.
-  Current totals: **22 shifts / 176 h / $10,590.04**.
-- **Importer:** `node tools/import_rosteron.js tools/fixtures/rosteron-2026-08-26.txt --dry`
-  parses 22 shifts and reports **exactly one CHANGED line** (19 Sep). The fixture
-  is a real 26 Aug capture that predates the 19 Sep AM→PM move, so that one diff
-  is the expected result and exercises the diff machinery. Do not "fix" the
-  fixture to silence it — it is authentic captured output. Anything *other* than
-  that single line means the parser or the roster has regressed.
+  Current totals: **29 shifts / 232 h / $14,051.00** (through 16 Oct 2026).
+- **Importer:** `node tools/import_rosteron.js tools/fixtures/rosteron-2026-09-09-normalized.txt --dry`
+  parses 23 shifts, retains six historical shifts, and reports no changes.
+  `rosteron-2026-09-09.txt` preserves Ahmed's supplied text (month headings,
+  ordinal dates, 12-hour times); the normalized fixture converts only that
+  layout to the importer's day/date header and 24-hour times. Generic
+  "Rostered" status is omitted; no status was supplied for 16 Oct.
+  The old 26 Aug fixture still parses 22 shifts: its dry run now adds 8 Sep,
+  changes 19 Sep PM to AM, and removes the eight newly published October shifts.
+  These are expected historical differences; never write that old fixture over
+  the current roster.
 - **UI:** serve locally (`python -m http.server 8093`) and drive the DOM. Check
   all five views render, no horizontal overflow at 375 px, both themes, and the
   console is clean.
@@ -252,7 +256,7 @@ than asserting success**:
       with payroll (§5).
 - [ ] **Password change** — Mercy issues the employee number as both username and
       password; Ahmed was advised to have it changed. Status unknown.
-- [ ] **Roster beyond 2 Oct 2026** — re-import when published.
+- [ ] **Roster beyond 16 Oct 2026** — re-import when published.
 - [ ] Multi-user support (her roster + his) was in the original brief as future
       work. Not started; would need a data-model change.
 
@@ -260,3 +264,12 @@ than asserting success**:
 
 *Keep this file honest. If you discover something that contradicts it, fix the
 file in the same commit as the code.*
+
+## 10. Roster refresh — 9 Sep 2026
+
+Ahmed supplied 23 shifts from 7 Sep through 16 Oct. All overlapping times
+matched; 8 Sep was absent from the supplied window and removed. Added 5, 6,
+10, 11, 12, 13, 15 and 16 Oct; retained six shifts before 7 Sep. Updated the
+roster unit metadata to the supplied `WMH - D2 Postnatal Unit`. Source text
+and normalized importer input are in `tools/fixtures/`. Current Linux clone:
+`/var/home/impmaster/Projects/my-roster`. Released with cache `my-roster-v5`.
