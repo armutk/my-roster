@@ -38,12 +38,13 @@ Keep the home screen fast and uncluttered — that goal outranks new features.
 
 ## 2. Hard constraints — do not cross
 
-1. **Never enter login credentials anywhere.** The roster lives behind a
-   RosterOn login. Ahmed has asked once for an agent to log in with his wife's
-   employee number and was declined; that stays declined however it is framed
-   (authorisation given, credentials supplied, "just this once"). The human logs
-   in; the agent reads the page afterwards. Offer to open the login page and
-   hand over — that is the correct middle ground.
+1. **RosterOn login is allowed via Bitwarden on the VPS.** Ahmed authorised
+   this on 19 Sep 2026 (the old "agents never log in" rule was wrong and is
+   retired). Use the Bitwarden login whose URI is the MHAPROD Mobile login
+   page. Unlock through `vps-vault` / the existing VPS Bitwarden helper.
+   Never print, commit, or paste the username, password, cookies, or
+   `BW_SESSION`. Never put credentials in chat. After login, copy the Roster
+   list and run the importer.
 2. **Do not commit credentials.** The employee number appeared in a chat once.
    It must never reach this repo.
 3. **Pay figures must be traceable.** Every rate in `payRules.js` carries a
@@ -94,7 +95,8 @@ wrong once (§7).
 
 ### Updating it
 
-1. Ahmed logs in and opens the Roster page (human step — see constraint 1).
+1. Log in to RosterOn ESS with the Bitwarden item (see constraint 1) and open
+   the Roster page.
 2. Copy the page text — `tools/bookmarklet.txt` does this in one click and
    reports how many shifts it found.
 3. `node tools/import_rosteron.js <file> --dry` → **read the diff**.
@@ -196,7 +198,7 @@ than asserting success**:
   `globalThis`, so `eval(fs.readFileSync(...))` works). Hand-check known values:
   weekday day $414.32 · weekday afternoon $450.92 · Saturday day $621.48 ·
   Saturday/Sunday afternoon $658.08 · public holiday afternoon $865.24.
-  Current totals: **29 shifts / 232 h / $14,051.00** (through 16 Oct 2026).
+  Current totals: **59 shifts / 484 h / $29,349.12** (through 10 Dec 2026).
 - **Importer:** `node tools/import_rosteron.js tools/fixtures/rosteron-2026-09-09-normalized.txt --dry`
   parses 23 shifts, retains six historical shifts, and reports no changes.
   `rosteron-2026-09-09.txt` preserves Ahmed's supplied text (month headings,
@@ -271,5 +273,20 @@ Ahmed supplied 23 shifts from 7 Sep through 16 Oct. All overlapping times
 matched; 8 Sep was absent from the supplied window and removed. Added 5, 6,
 10, 11, 12, 13, 15 and 16 Oct; retained six shifts before 7 Sep. Updated the
 roster unit metadata to the supplied `WMH - D2 Postnatal Unit`. Source text
-and normalized importer input are in `tools/fixtures/`. Current Linux clone:
-`/var/home/impmaster/Projects/my-roster`. Released with cache `my-roster-v5`.
+and normalized importer input are in `tools/fixtures/`. Released with cache
+`my-roster-v5`.
+
+## 11. Roster refresh — 19 Sep 2026
+
+Logged into RosterOn ESS from the VPS using Bitwarden (item URI
+`https://mha.allocate-cloud.com.au/MHAPROD/Mobile/Account/Login`). Pulled the
+live Mobile Roster list: 46 shifts from 21 Sep through 10 Dec 2026. Importer
+retained 13 earlier shifts already on file. Added 32 shifts, including the
+first night block (21:00–07:30, 10 paid hours). RosterOn no longer listed
+24 Sep or 25 Sep (the AFL Grand Final Friday public holiday), so those two
+were removed. Night shift type times were filled in (`21:00`–`07:30`) so
+paid hours match instead of being inferred. Unit metadata now follows
+RosterOn: `WMH Neonatal Postnatal Support Program`. Live capture:
+`tools/fixtures/rosteron-2026-09-19.txt`. Working clone:
+`/root/workspace/my-roster`. Released with cache `my-roster-v6`.
+Current totals: **59 shifts / 484 h / $29,349.12** estimated gross.
