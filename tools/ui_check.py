@@ -85,6 +85,19 @@ async def run(url, port, show_pay):
             print("contract card:", (await send("Runtime.evaluate", {
                 "expression": "(document.getElementById('contractCard')||{}).innerText"}) or "").replace("\n", " | "))
             print("console errors:", await send("Runtime.evaluate", {"expression": "JSON.stringify(window.__errs)"}))
+
+            # Narrow-viewport overflow check (the app must not scroll sideways).
+            for width in (375, 320):
+                await send("Emulation.setDeviceMetricsOverride",
+                           {"width": width, "height": 800, "deviceScaleFactor": 2, "mobile": True})
+                await asyncio.sleep(0.8)
+                for view in VIEWS:
+                    await send("Runtime.evaluate", {"expression":
+                        f"document.querySelector('[data-view=\"{view}\"]').click()"})
+                    await asyncio.sleep(0.6)
+                    overflow = await send("Runtime.evaluate", {"expression":
+                        "(() => { const d=document.documentElement; return d.scrollWidth - d.clientWidth; })()"})
+                    print(f"  {width}px {view:9} overflow {overflow}px")
     finally:
         proc.terminate()
 

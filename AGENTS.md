@@ -260,6 +260,11 @@ than asserting success**:
   Check alignment after touching the calendar.
 - **Assuming percentage shift allowances.** They are flat per-shift amounts.
   Getting this wrong misprices every afternoon and night shift.
+- **Long note text on a phone (23 Sep 2026).** `.note-tag` was `nowrap`, so a
+  descriptive shift note ran off the right edge and stretched the page to 595px
+  at a 375px viewport. Keep shift notes short and let tags wrap
+  (`overflow-wrap: anywhere; max-width: 100%`). `tools/ui_check.py` reports the
+  overflow for every view at 375px and 320px — run it before releasing.
 
 ---
 
@@ -368,5 +373,10 @@ app cannot fix and is now a payroll query (draft at
 `docs/payroll-query-email.md`, still unsent). Totals are now **62 shifts /
 508 h / $30,631.32**. New tools: `tools/payslip_compare.js` and
 `tools/ui_check.py` (CDP-driven UI check, since Browser Use is unavailable
-here). Comparison detail: `docs/app-vs-payslip.md`. Not yet pushed — the Pages
-release waits on Ahmed.
+here). Comparison detail: `docs/app-vs-payslip.md`.
+Not yet pushed — the Pages release waits on Ahmed.
+
+Follow-up found by the new UI check: the descriptive orientation notes made
+`.note-tag` overflow the roster view to 595px at a 375px viewport. The notes are
+now short ("Orientation Shift", "confirm date" on the two inferred dates) and
+the tag wraps; overflow is 0px on all five views at 375px and 320px.

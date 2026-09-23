@@ -48,7 +48,7 @@
         "start": "07:00",
         "end": "15:30",
         "paidHours": 8,
-        "note": "Orientation Shift (dates inferred from the payslip — confirm with payroll)",
+        "note": "Orientation Shift (confirm date)",
         "pinned": true
       },
       {
@@ -58,7 +58,7 @@
         "start": "07:00",
         "end": "15:30",
         "paidHours": 8,
-        "note": "Orientation Shift (dates inferred from the payslip — confirm with payroll)",
+        "note": "Orientation Shift (confirm date)",
         "pinned": true
       },
       {
@@ -128,7 +128,7 @@
         "start": "07:00",
         "end": "15:30",
         "paidHours": 8,
-        "note": "Orientation Shift (paid as Orientation Shift on the 23/09 payslip)",
+        "note": "Orientation Shift",
         "pinned": true
       },
       {
