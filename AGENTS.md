@@ -262,6 +262,14 @@ than asserting success**:
       −$207.18 (or $168.33 if the early finish was that same shift). Query draft:
       `docs/payroll-query-email.md`, unsent. Public holiday at 200% still
       unchecked.
+- [x] **Reconcile the 24/08–06/09/2026 payslip** — done, see
+      `docs/payslip-reconciliation-2026-09-06.md`. **No discrepancies**: all four
+      pay lines tie to the roster (32 buddy + 16 ordinary + 2 orientation days),
+      the 3 afternoon allowances, 8 laundry units, 12% super on superable-only
+      earnings and net pay all reconcile, and YTD figures carry into the 23/09
+      payslip to the cent. Open question only: SL accrual runs at 4.61% of hours
+      (12 days/yr equivalent) against a possible 15-day entitlement — needs the
+      personal leave clause quoted before it goes to payroll.
 - [ ] **Sunday night allowance** and **morning shift window** need confirming
       with payroll (§5).
 - [ ] **Password change** — Mercy issues the employee number as both username and
