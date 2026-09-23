@@ -255,9 +255,13 @@ than asserting success**:
       07/09–20/09/2026, see `docs/payslip-reconciliation-2026-09-20.md`. The
       $36.60 flat afternoon allowance is **confirmed** (5/5 shifts, including
       weekend afternoons) and payroll's base hourly is the exact 1/38th figure
-      (51.7947), not the published 51.79. Two payroll shortfalls found: weekend
-      penalty paid on 2 of 3 weekend shifts (−$207.18) and 1.5 h missing from
-      ordinary hours (−$77.69). Public holiday at 200% still unchecked.
+      (51.7947), not the published 51.79. The 1.5 h ordinary-hours gap is
+      **explained, not a shortfall**: she finished 1.5 h early on one shift, so
+      actual worked hours were 62.5 against 64 nominal. One shortfall stands:
+      weekend penalty paid on 2 of 3 weekend shifts, **Sat 19/09** uncoded,
+      −$207.18 (or $168.33 if the early finish was that same shift). Query draft:
+      `docs/payroll-query-email.md`, unsent. Public holiday at 200% still
+      unchecked.
 - [ ] **Sunday night allowance** and **morning shift window** need confirming
       with payroll (§5).
 - [ ] **Password change** — Mercy issues the employee number as both username and

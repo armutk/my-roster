@@ -18,7 +18,8 @@ Sources: `tools/fixtures/rosteron-2026-08-26.txt`, `tools/fixtures/rosteron-2026
 | 16/09 | Wed | afternoon | 13:00–21:30 | 8 |
 | 19/09 | Sat | afternoon | 13:00–21:30 | 8 |
 
-8 shifts, 64 paid hours. Three weekend shifts (12/09, 13/09, 19/09), 24 h.
+8 rostered shifts, 64 nominal hours. Three weekend shifts (12/09, 13/09, 19/09),
+24 h nominal. She finished 1.5 h early on one shift, so 62.5 hours were worked.
 The 08/09 shift is absent from `roster.json` (dropped on the 9 Sep import as
 "absent from the supplied window") but is present in the 26 Aug RosterOn capture
 and is paid on the payslip. `roster.json` needs it back.
@@ -39,31 +40,30 @@ and is paid on the payslip. `roster.json` needs it back.
 
 ## What matches
 
+- **Ordinary hours 54.50 against 56 nominal.** 56 − 1.5 = 54.5. She finished
+  1.5 h early on one shift (Ahmed, 23 Sep 2026). Ordinary hours follow actual
+  worked time, so the payslip is correct here and the roster is the nominal
+  figure. **Resolved — not a shortfall.**
 - **Afternoon Shift Allowance: 5.00 units.** The roster has exactly five
   afternoon shifts finishing 21:30 (07, 13, 14, 16, 19 Sep). Flat $36.60 per
-  shift is confirmed, and it is confirmed to apply to weekend afternoons.
+  shift is confirmed, and it is confirmed to apply to weekend afternoons. Still
+  5 units, so the early finish did not push a shift out of the cl 34.1(b) window.
 - **Laundry allowance: 8.00 units** = 8 shifts, matching the 8 the roster shows.
 - Weekend ordinary hours are paid as base + 50% loading, i.e. the cl 48.1
   single 150% weekend rate as modelled in `payEngine.js`.
 
-## Discrepancies
+## Open discrepancy — weekend penalty (Sat 19/09)
 
-1. **Weekend penalty paid on 2 shifts, not 3.** Penalty 50% at 16.00 units
-   covers 16 h; the roster has 24 h of weekend work. Missing 8 h × 50% ×
-   51.7947 = **$207.18**. The payslip's own counter (`W/Ends worked: 1`) agrees
-   payroll only counted one weekend, which points at **Sat 19/09** as the shift
-   that lost its weekend flag (12/09 + 13/09 form the one weekend counted).
-2. **Ordinary hours 54.50, roster 56** for the seven non-orientation shifts.
-   1.5 h × 51.7947 = **$77.69**.
+Penalty 50% is paid on 16.00 units, supporting only 16 h of the 24 h of weekend
+work the roster shows. `W/Ends worked: 1` says payroll counted one weekend, so
+the flagged pair is 12/09 + 13/09 and **Sat 19/09 lost its weekend flag**
+(inference: payslip penalty lines are period-anchored at 07/09, so they cannot
+name individual shifts).
 
-Total gross shortfall **≈ $284.87** (plus ~$34 super at 12%).
+Amount at stake: 8 h × 50% × 51.7947 = **$207.18** gross. If the 1.5 h early
+finish was on the 19/09 shift itself, the correct loading applies to 6.5 h =
+**$168.33**. The 16.00 units are exactly two full 8 h shifts, which rules out
+the short-shift being one of the flagged two.
 
-Engine check: `payEngine` gross for the period at the published rate is
-3,704.72 against the payslip's comparable 3,419.88, a 284.84 gap, which
-decomposes to exactly the two items above.
-
-## Action
-
-Raise with Mercy payroll: (a) weekend penalty missing for Sat 19/09, (b) 1.5 h
-missing from ordinary hours. Nothing here changes the roster data except the
-missing 08/09 shift.
+Exactly one item to raise with Mercy payroll. Nothing here changes roster data
+except restoring the missing 08/09 shift.

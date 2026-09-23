@@ -4,6 +4,9 @@ To send from Tohura's own address. Recipient: the payroll mailbox in her Mercy
 employee portal, cc her Nurse Unit Manager. No payroll address is printed on the
 payslip, so it has to come from the portal or her manager.
 
+One item only: the missing weekend penalty for Sat 19/09. The 1.5 h difference in
+ordinary hours is explained (early finish) and is not raised.
+
 **To:** [Mercy payroll mailbox]
 **Cc:** [Nurse Unit Manager]
 **Subject:** Pay enquiry — payslip 23/09/2026, period 07/09/2026 to 20/09/2026 (E005885)
@@ -13,13 +16,13 @@ payslip, so it has to come from the portal or her manager.
 Hello,
 
 I am writing about my payslip for the pay period 07/09/2026 to 20/09/2026, paid
-23/09/2026, and would like two items checked.
+23/09/2026.
 
 Employee: Tohura Khanam, E005885, RN Gr 2 Yr 7 (YP8), Werribee Mercy Hospital.
 Payslip shows unit WMH D2, Childbirth Unit; my RosterOn roster shows WMH
 Neonatal Postnatal Support Program.
 
-**1. Weekend penalty — Saturday 19/09/2026**
+**Weekend penalty — Saturday 19/09/2026**
 
 I worked three weekend shifts in the period:
 
@@ -27,22 +30,13 @@ I worked three weekend shifts in the period:
 - Sun 13/09/2026, 13:00 to 21:30 (afternoon)
 - Sat 19/09/2026, 13:00 to 21:30 (afternoon)
 
-The payslip shows Penalty 50% on 16.00 units, which covers two of the three
-shifts (16 of the 24 weekend hours). The payslip also records "W/Ends worked: 1".
-Could you check whether Saturday 19/09 was coded as a weekend shift? Under
-cl 48.1 of the Nurses and Midwives (Victorian Public Sector) EA 2024 to 2028,
-weekend ordinary hours attract 150%.
+The payslip shows Penalty 50% on 16.00 units, which covers two of these three
+shifts, and records "W/Ends worked: 1". Could you check whether Saturday
+19/09/2026 was coded as a weekend shift? Under cl 48.1 of the Nurses and
+Midwives (Victorian Public Sector) EA 2024 to 2028, weekend ordinary hours
+attract 150%.
 
-**2. Ordinary hours**
-
-My record for the period is 8 shifts and 64 paid hours, including the
-08/09/2026 orientation shift that appears on the payslip as 8.00 units. The
-payslip lists 54.50 ordinary hours plus 8.00 orientation hours, which totals
-62.50 hours, so 1.5 hours appear to be unrecorded. Could you confirm which shift
-was recorded as 1.5 hours shorter?
-
-The two items come to roughly $284.87 gross ($207.18 weekend loading and $77.69
-of base hours), before superannuation.
+The weekend loading on that shift is up to $207.18 gross, before superannuation.
 
 I can send my RosterOn shift list for the period if that helps.
 
