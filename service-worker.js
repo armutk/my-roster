@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-roster-v7';
+const CACHE_NAME = 'my-roster-v8';
 const APP_SHELL = [
   './',
   './index.html',
@@ -7,6 +7,8 @@ const APP_SHELL = [
   './src/js/app.js',
   './src/js/payRules.js',
   './src/js/payEngine.js',
+  './src/js/leaveRules.js',
+  './src/js/leaveEngine.js',
   './src/data/roster.json',
   './icons/icon-192.png',
   './icons/icon-512.png',

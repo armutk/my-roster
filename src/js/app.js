@@ -628,6 +628,7 @@
     if (view === 'calendar') renderCalendar();
     if (view === 'stats') renderStats();
     if (view === 'pay') renderPay();
+    if (view === 'leave') renderLeave();
     renderEditBanner();
   }
 
@@ -1572,6 +1573,136 @@
       <p class="contract-meta"><strong>Not included in these estimates:</strong><br>${R.exclusions.join(' · ')}</p>`;
   }
 
+  /* ================= Rendering: Leave ================= */
+
+  /** "17 Sep" from an ISO date string. */
+  function shortIso(iso) {
+    return formatShortDate(parseLocalDate(iso));
+  }
+
+  function leaveHours(n) {
+    return n == null ? 'Needs verification' : `${n.toFixed(2)} h`;
+  }
+
+  function leaveDays(hours) {
+    return hours == null ? '' : `${(hours / 8).toFixed(2)} days at 8 h`;
+  }
+
+  /** AL / SL / LSL / ALW rows for a balance object from LeaveEngine. */
+  function leaveBalanceRows(bal) {
+    return `
+      <div class="pay-line">
+        <span class="pay-line-label">Annual leave (AL)</span>
+        <span class="pay-line-value">${leaveHours(bal.AL.balance)}</span>
+      </div>
+      <div class="pay-line">
+        <span class="pay-line-label" style="opacity:0.72;">+${leaveHours(bal.AL.accrued)} accrued on ${bal.hours} paid hours · ${leaveDays(bal.AL.balance)}</span>
+        <span class="pay-line-value" style="opacity:0.72;"></span>
+      </div>
+      <div class="pay-line">
+        <span class="pay-line-label">Personal leave (SL)</span>
+        <span class="pay-line-value">${leaveHours(bal.SL.balance)}</span>
+      </div>
+      <div class="pay-line">
+        <span class="pay-line-label" style="opacity:0.72;">+${leaveHours(bal.SL.accrued)} accrued · ${leaveDays(bal.SL.balance)}</span>
+        <span class="pay-line-value" style="opacity:0.72;"></span>
+      </div>
+      <div class="pay-line">
+        <span class="pay-line-label">Long service leave (LSL) <span class="pay-clause">reported, not projected</span></span>
+        <span class="pay-line-value">${leaveHours(bal.LSL.balance)}</span>
+      </div>
+      <div class="pay-line">
+        <span class="pay-line-label">VIC additional week (ALW) <span class="pay-clause">reported, not projected</span></span>
+        <span class="pay-line-value">${leaveHours(bal.ALW.balance)}</span>
+      </div>`;
+  }
+
+  function renderLeave() {
+    const body = document.getElementById('leaveBody');
+    if (!body) return;
+
+    if (!window.LeaveEngine || !window.LeaveRules) {
+      body.innerHTML = '<p style="color:var(--text-dim);">Leave engine unavailable.</p>';
+      return;
+    }
+
+    const L = window.LeaveEngine;
+    const R = window.LeaveRules;
+    const res = L.computeLeave(sortedShifts(), DATA.shiftTypes);
+    const a = res.anchor;
+
+    const verifiedRows = res.checks
+      .map(
+        (c) => `
+      <div class="pay-line">
+        <span class="pay-line-label">${c.label} <span class="pay-clause">${c.ok ? 'matches the payslip' : 'does not reconcile'}</span></span>
+        <span class="pay-line-value">${c.expected} h vs payslip ${c.actual} h</span>
+      </div>`
+      )
+      .join('');
+
+    body.innerHTML = `
+      <div class="section-title" style="margin-top:4px;">Annual Leave Balance</div>
+      <div class="card">
+        <div class="pay-hero">
+          <div class="pay-hero-label">Annual leave accrued</div>
+          <div class="pay-hero-value">${leaveHours(res.toToday.AL.balance)}</div>
+          <div class="pay-hero-meta">${leaveDays(res.toToday.AL.balance)} · as at ${shortIso(res.today)}</div>
+        </div>
+        <div class="pay-line">
+          <span class="pay-line-label">Balance printed on the ${shortIso(a.paymentDate)} payslip <span class="pay-clause">as at ${shortIso(a.asAt)}</span></span>
+          <span class="pay-line-value">${leaveHours(a.balances.AL)}</span>
+        </div>
+        <div class="pay-line">
+          <span class="pay-line-label">Accrued since, on ${res.hours.toToday} paid hours</span>
+          <span class="pay-line-value">+${leaveHours(res.toToday.AL.accrued)}</span>
+        </div>
+        <div class="pay-line">
+          <span class="pay-line-label">Accrual rate <span class="pay-clause">from payslips</span></span>
+          <span class="pay-line-value">${(R.rates.annualLeave.hoursPerPaidHour * 100).toFixed(4)}% of paid hours</span>
+        </div>
+        <p class="pay-note">${R.notes.unit} ${R.notes.dayEquivalent}</p>
+      </div>
+
+      <div class="section-title">Leave Now</div>
+      <div class="card">${leaveBalanceRows(res.toToday)}</div>
+
+      <div class="section-title">If Every Rostered Shift To ${shortIso(res.lastRosterDate)} Is Worked</div>
+      <div class="card">
+        ${leaveBalanceRows(res.endOfRoster)}
+        <p class="pay-note">Adds the ${res.shiftsRemaining} shifts still rostered (${res.hours.remaining} paid hours) on top of the payslip balance. Leave taken, or shifts not worked, reduce it.</p>
+      </div>
+
+      <div class="section-title">How This Is Worked Out</div>
+      <div class="card">
+        <div class="pay-callout">
+          <strong>Balances come from a payslip, never from the roster.</strong> ${R.notes.source}
+        </div>
+        <div class="pay-line">
+          <span class="pay-line-label">Annual leave <span class="pay-clause">${(R.rates.annualLeave.hoursPerPaidHour * 100).toFixed(4)}% of paid hours</span></span>
+          <span class="pay-line-value">5 weeks a year</span>
+        </div>
+        <p class="pay-note">${R.rates.annualLeave.source}</p>
+        <div class="pay-line">
+          <span class="pay-line-label">Personal leave <span class="pay-clause">${(R.rates.personalLeave.hoursPerPaidHour * 100).toFixed(4)}% of paid hours</span></span>
+          <span class="pay-line-value">12 days a year equivalent</span>
+        </div>
+        <p class="pay-note">${R.rates.personalLeave.source}</p>
+        ${verifiedRows}
+        <p class="pay-note">${R.notes.rounding}</p>
+        <div class="pay-callout">
+          <strong>Not money.</strong> ${R.notes.notPay}
+        </div>
+        ${
+          res.warnings.length
+            ? `<div class="pay-callout warn"><strong>Needs verification</strong>${res.warnings
+                .map((w) => `<p style="margin:6px 0 0;">${w}</p>`)
+                .join('')}</div>`
+            : ''
+        }
+      </div>`;
+  }
+
   /* ================= Navigation ================= */
 
   function setActiveView(name) {
@@ -1584,6 +1715,7 @@
     if (name === 'calendar') renderCalendar();
     if (name === 'stats') renderStats();
     if (name === 'pay') renderPay();
+    if (name === 'leave') renderLeave();
     window.scrollTo({ top: 0 });
   }
 

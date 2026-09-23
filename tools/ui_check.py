@@ -16,7 +16,7 @@ CHROME_CANDIDATES = [
     "/root/.cache/ms-playwright/chromium_headless_shell-1223/chrome-headless-shell-linux64/chrome-headless-shell",
     "/root/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell",
 ]
-VIEWS = ["home", "roster", "calendar", "stats", "pay"]
+VIEWS = ["home", "roster", "calendar", "stats", "pay", "leave"]
 
 
 def chrome_path():
@@ -26,7 +26,7 @@ def chrome_path():
     sys.exit("no headless shell found; check /root/.cache/ms-playwright")
 
 
-async def run(url, port, show_pay):
+async def run(url, port, show_pay, show_leave):
     import websockets
     chrome = chrome_path()
     proc = subprocess.Popen(
@@ -81,6 +81,10 @@ async def run(url, port, show_pay):
                     for line in text.splitlines():
                         if "$" in line:
                             print("   ", line.strip())
+                if show_leave and view == "leave":
+                    for line in text.splitlines():
+                        if " h" in line or "days" in line:
+                            print("   ", line.strip())
 
             print("contract card:", (await send("Runtime.evaluate", {
                 "expression": "(document.getElementById('contractCard')||{}).innerText"}) or "").replace("\n", " | "))
@@ -107,5 +111,6 @@ if __name__ == "__main__":
     ap.add_argument("--url", default="http://127.0.0.1:8093/index.html")
     ap.add_argument("--port", type=int, default=9224)
     ap.add_argument("--pay", action="store_true", help="print the Pay view's money lines")
+    ap.add_argument("--leave", action="store_true", help="print the Leave view's balance lines")
     a = ap.parse_args()
-    asyncio.run(run(a.url, a.port, a.pay))
+    asyncio.run(run(a.url, a.port, a.pay, a.leave))
