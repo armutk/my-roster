@@ -42,6 +42,26 @@
     },
     "shifts": [
       {
+        "date": "2026-08-24",
+        "day": "Monday",
+        "shiftType": "day",
+        "start": "07:00",
+        "end": "15:30",
+        "paidHours": 8,
+        "note": "Orientation Shift (dates inferred from the payslip — confirm with payroll)",
+        "pinned": true
+      },
+      {
+        "date": "2026-08-25",
+        "day": "Tuesday",
+        "shiftType": "day",
+        "start": "07:00",
+        "end": "15:30",
+        "paidHours": 8,
+        "note": "Orientation Shift (dates inferred from the payslip — confirm with payroll)",
+        "pinned": true
+      },
+      {
         "date": "2026-08-26",
         "day": "Wednesday",
         "shiftType": "day",
@@ -100,6 +120,16 @@
         "start": "13:00",
         "end": "21:30",
         "paidHours": 8
+      },
+      {
+        "date": "2026-09-08",
+        "day": "Tuesday",
+        "shiftType": "day",
+        "start": "07:00",
+        "end": "15:30",
+        "paidHours": 8,
+        "note": "Orientation Shift (paid as Orientation Shift on the 23/09 payslip)",
+        "pinned": true
       },
       {
         "date": "2026-09-09",
@@ -1011,9 +1041,13 @@
     }).join('');
 
     const emp = DATA.meta.employee;
+    // Show the rate the engine actually pays (payRules.hourlyRateMode), which is what
+    // Mercy payroll uses, with the rounded published figure alongside it.
+    const rateNow = window.PayRules.baseHourlyRateOn(new Date().toISOString().slice(0, 10));
     document.getElementById('contractCard').innerHTML = `
       <div class="contract-box"><span class="cb-label">Average contracted hours</span><span class="cb-value">${emp.contractedWeeklyHours} per week</span></div>
-      <div class="contract-box"><span class="cb-label">Base hourly rate</span><span class="cb-value">$${emp.baseHourlyRate.toFixed(2)}</span></div>
+      <div class="contract-box"><span class="cb-label">Base hourly rate</span><span class="cb-value">$${rateNow.rate.toFixed(4)}</span></div>
+      <div class="contract-box"><span class="cb-label">Published (rounded)</span><span class="cb-value">$${rateNow.publishedHourly.toFixed(2)}</span></div>
       <div class="contract-box"><span class="cb-label">Classification</span><span class="cb-value" style="text-align:right;">${emp.classification}</span></div>
       <div class="contract-box"><span class="cb-label">Employment type</span><span class="cb-value" style="text-align:right;">${emp.employmentType}</span></div>
       <p class="contract-meta" style="margin-top:10px;">${emp.workplace} · ${emp.employer}<br>${emp.agreement}</p>`;

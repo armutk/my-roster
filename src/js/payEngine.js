@@ -282,7 +282,12 @@
     }
 
     const baseHourly = rateInfo.rate;
-    const paidHours = Number(shift.paidHours) || (typeDefaults ? typeDefaults.paidHours : 0);
+    // Paid hours: an explicitly recorded actual beats the roster figure, so a short
+    // shift (she left early) is paid for the hours worked, not the hours rostered.
+    const rosteredHours = Number(shift.paidHours) || (typeDefaults ? typeDefaults.paidHours : 0);
+    const workedHoursRecorded =
+      shift.workedHours != null && Number.isFinite(Number(shift.workedHours));
+    const paidHours = workedHoursRecorded ? Number(shift.workedHours) : rosteredHours;
     const notes = [];
 
     // --- Segments -------------------------------------------------------
@@ -306,7 +311,11 @@
           scaled: true,
         }));
 
-        if (diff >= 0.5 && diff <= 1.0) {
+        if (workedHoursRecorded && diff > 1) {
+          notes.push(
+            `Actual hours recorded: ${paidHours}h paid against ${elapsed}h on site. The ${diff}h difference is a recorded early finish on top of the cl 44.1(a) meal break, so no meal-break warning is raised.`
+          );
+        } else if (diff >= 0.5 && diff <= 1.0) {
           // Normal, expected: an unpaid meal break within the clause 44.1(a) range.
           mealBreakHours = diff;
           notes.push(
@@ -379,6 +388,23 @@
         }
       }
     }
+    // --- Laundry allowance (Appendix 2, Part 2) ---------------------------
+    // Paid per shift worked, orientation included. Confirmed on both real payslips
+    // (8.00 units each). Suppress with `laundryAllowance: false` on the shift.
+    let laundryItem = null;
+    if (shift.laundryAllowance !== false) {
+      const row = R.rateOn(R.laundryAllowance.table, shift.date);
+      if (row) {
+        laundryItem = {
+          key: 'laundry',
+          label: R.laundryAllowance.label,
+          amount: row.amount,
+          agreementClause: R.laundryAllowance.agreementClause,
+          calculationMethod: R.laundryAllowance.calculationMethod,
+        };
+        otherAllowanceItems.push(laundryItem);
+      }
+    }
     const otherAllowanceTotal = round2(otherAllowanceItems.reduce((s, a) => s + a.amount, 0));
 
     // --- Missed meal break (clause 44.1(c)) -------------------------------
@@ -419,6 +445,8 @@
       start: win ? win.startTime : null,
       end: win ? win.endTime : null,
       paidHours,
+      rosteredHours,
+      workedHoursRecorded,
       baseHourlyRate: baseHourly,
       baseRateInfo: rateInfo,
 
@@ -442,6 +470,7 @@
       publicHolidayName: (segments.find((s) => s.isPublicHoliday) || {}).publicHolidayName || null,
       otherAllowances: otherAllowanceItems,
       otherAllowanceTotal,
+      laundryAllowance: laundryItem,
       missedMealBreak,
       missedMealBreakTotal,
       overtime: overtimeResult,

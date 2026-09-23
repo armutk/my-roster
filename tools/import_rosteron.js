@@ -22,6 +22,12 @@
  * RosterOn ESS only lists shifts from today forward. Existing shifts that fall
  * BEFORE the earliest imported date are kept, so re-importing later never wipes
  * out roster history.
+ *
+ * A shift carrying `"pinned": true` is kept from the file no matter what — it is a
+ * payroll-confirmed record RosterOn does not list (the orientation days). The
+ * importer never removes, reclassifies or relabels a pinned shift, and reports it
+ * under PINNED so a silent loss is impossible. The 08/09/2026 orientation shift
+ * was lost once by an import that did not cover it; that is why this exists.
  */
 
 const fs = require('fs');
@@ -140,10 +146,15 @@ const imported = parsed.map((s) => {
   return out;
 });
 
-// Merge: keep existing shifts earlier than the import window.
+// Merge: keep existing shifts earlier than the import window, and every pinned shift
+// (a payroll-confirmed record RosterOn does not list, e.g. the orientation days).
 const earliest = imported.reduce((a, s) => (s.date < a ? s.date : a), imported[0].date);
-const retained = (existing.shifts || []).filter((s) => s.date < earliest);
-const merged = [...retained, ...imported].sort((a, b) => a.date.localeCompare(b.date));
+const pinnedExisting = (existing.shifts || []).filter((s) => s.pinned === true);
+const retained = (existing.shifts || []).filter((s) => s.pinned !== true && s.date < earliest);
+const pinnedDates = new Set(pinnedExisting.map((s) => s.date));
+const importedKept = imported.filter((s) => !pinnedDates.has(s.date));
+const heldBack = imported.filter((s) => pinnedDates.has(s.date));
+const merged = [...retained, ...pinnedExisting, ...importedKept].sort((a, b) => a.date.localeCompare(b.date));
 
 /* ---------------------------- diff ---------------------------- */
 
@@ -171,6 +182,16 @@ if (added.length)   console.log(`\nADDED (${added.length}):\n${added.join('\n')}
 if (changed.length) console.log(`\nCHANGED (${changed.length}):\n${changed.join('\n')}`);
 if (removed.length) console.log(`\nREMOVED (${removed.length}):\n${removed.join('\n')}`);
 if (!added.length && !changed.length && !removed.length) console.log('\nNo changes — roster already matches RosterOn.');
+
+if (pinnedExisting.length) {
+  console.log(`\nPINNED (${pinnedExisting.length}) — kept from the file; RosterOn does not list them:`);
+  pinnedExisting.forEach((s) =>
+    console.log(`  = ${s.date} ${s.day.slice(0, 3)} ${s.shiftType.padEnd(9)} ${s.start}-${s.end}  ${s.note || ''}`)
+  );
+  if (heldBack.length) {
+    console.log(`  (${heldBack.length} imported shift(s) ignored — the pinned record wins: ${heldBack.map((s) => s.date).join(', ')})`);
+  }
+}
 
 const review = merged.filter((s) => s._review);
 if (review.length) {

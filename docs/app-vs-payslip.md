@@ -1,62 +1,72 @@
 # App estimate vs real payslips
 
-Does the roster app's estimated gross match what Mercy actually paid? Ran
-`tools/payslip_compare.js` over `src/data/roster.json` for both pay periods.
+Does the roster app's estimated gross match what Mercy actually paid? Reproduce
+either period with:
 
-## Period 24/08/2026 – 06/09/2026
+```
+node tools/payslip_compare.js 2026-08-24 2026-09-06 --detail
+node tools/payslip_compare.js 2026-09-07 2026-09-20 --detail
+```
 
-| | App estimate | Payslip | Gap |
+## 24/08–06/09/2026 — now exact
+
+| | Before the fix | Now | Payslip |
 |---|---|---|---|
-| Shifts | 6 | 8 (incl. 2 orientation days) | |
-| Paid hours | 48 | 64 | |
-| Ordinary/buddy pay | 2,485.92 | 2,486.16 | −0.24 |
-| Orientation | — | 828.72 | −828.72 |
-| Afternoon allowance | 109.80 | 109.80 | 0 |
-| Laundry allowance | — (not modelled) | 4.80 | −4.80 |
-| **Gross** | **2,595.72** | **3,429.48** | **−833.76** |
+| Shifts | 6 | 8 | 8 (2 orientation days) |
+| Paid hours | 48 | 64 | 64 |
+| Ordinary / buddy | 2,485.92 | 3,314.88 | 3,314.88 |
+| Orientation | — | (in the above) | (in the above) |
+| Afternoon allowance | 109.80 | 109.80 | 109.80 |
+| Laundry allowance | — | 4.80 | 4.80 |
+| **Gross** | **2,595.72** | **3,429.48** | **3,429.48** |
 
-**The app understates this period by $833.76**, entirely from its own data gaps:
-the 24 and 25/08 orientation days are absent from `roster.json`, the engine does
-not model the laundry allowance, and the published 51.79 rate sits 0.0047 under
-payroll's exact 51.7947. Nothing is wrong with the pay.
+The app was $833.76 light, all of it its own data gaps: $828.72 of orientation
+pay that was never in `roster.json`, $4.80 of laundry the engine did not model,
+and $0.24 from the rounded published rate. Nothing was wrong with the pay.
 
-## Period 07/09/2026 – 20/09/2026
+## 07/09–20/09/2026 — now shows the real variance
 
-| | App estimate | Payslip | Gap |
+| | Before the fix | Now | Payslip |
 |---|---|---|---|
-| Shifts | 7 | 8 (incl. 08/09 orientation) | |
-| Paid hours | 56 | 62.5 | |
-| Ordinary pay | 2,900.24 | 2,822.81 (+414.36 orientation) | +77.69 over |
-| Weekend penalties | 621.48 (3 shifts) | 414.36 (2 shifts) | +207.16 over |
-| Afternoon allowance | 183.00 | 183.00 | 0 |
-| Laundry allowance | — | 4.80 | −4.80 |
-| **Gross** | **3,704.72** | **3,839.33** | **−134.61** |
+| Shifts | 7 | 8 | 8 (incl. 08/09 orientation) |
+| Paid hours | 56 | 64 | 62.5 |
+| Ordinary pay | 2,900.24 | 3,314.88 | 3,237.17 |
+| Weekend penalties | 621.48 (3 shifts) | 621.54 (3 shifts) | 414.36 (2 shifts) |
+| Afternoon allowance | 183.00 | 183.00 | 183.00 |
+| Laundry allowance | — | 4.80 | 4.80 |
+| **Gross** | **3,704.72** | **4,124.22** | **3,839.33** |
 
-The small net gap hides two large offsetting errors:
+The app now sits $284.89 **above** the payslip, and that gap is exactly the two
+known items, with nothing hidden:
 
-- **App is $284.59 too high** on what the roster says happened — 1.5 h of hours
-  she did not work (+77.69) and a third weekend loading payroll never paid
-  (+207.16), less the rate difference (−0.26).
-- **App is $419.12 too low** on the pay it cannot see — the 08/09 orientation
-  shift (−414.32) and laundry allowance (−4.80).
+- **$207.18** — the weekend loading the roster shows on Sat 19/09 and the payslip
+  never paid. This is the genuine payroll query.
+- **$77.69** — the 1.5 h she did not work. The roster is nominal until that shift
+  carries `workedHours: 6.5`, which needs the date (see Open).
 
-The $207.16 excess is the real payroll issue in this period, and it is the same
-$207.18 the payslip query is about. The app found it by luck: its number happens
-to be near the payslip total while being wrong in both directions.
+Before the fix those two overstatements were masked by $419.12 of missing income,
+so the app looked roughly right while being wrong in both directions. A headline
+number that cancels out is worse than a number that is plainly off.
 
-## What would make it match
+## Fixed on 23/09/2026
 
-1. **Add the three orientation shifts** (24, 25/08 and 08/09) to the roster data —
-   the single biggest gap, $1,243.04 across the two periods.
-2. **Model the laundry allowance** (cl 34, $0.60 per shift, 8 units a fortnight).
-3. **Switch `hourlyRateMode` to `'exact'`** — payroll uses 1/38th of 1,968.20,
-   i.e. 51.7947, which is 4 cents per 8-hour shift above the published 51.79.
-4. **Record actual worked hours** where they differ from the roster (the 1.5 h
-   early finish), so the app stops overstating by worked-hours drift.
+| # | Fault | Fix |
+|---|---|---|
+| 1 | Three orientation shifts missing from `roster.json` — 24, 25/08 and 08/09 | Added as ordinary-rate day shifts, named in `note` |
+| 2 | Laundry allowance not modelled (Appendix 2, Part 2 — $0.60 per shift) | `payRules.laundryAllowance`, applied per shift by `payEngine.js` |
+| 3 | `hourlyRateMode` was `'published'` (51.79) | Now `'exact'` (51.7947 = 1,968.20 / 38), which is what payroll pays |
+| 4 | No way to record hours actually worked | `workedHours` on a shift now beats `paidHours` |
 
-With those in place the app's 07/09–20/09 estimate becomes 3,839.33 − 207.18 =
-3,632.15, and the $207.18 weekend shortfall shows up as a genuine variance
-instead of cancelling out against data gaps.
+Committed locally with cache `my-roster-v7`. The GitHub Pages push is the deploy
+step and has not been made.
 
-Run it again with:
-`node tools/payslip_compare.js 2026-08-24 2026-09-06 --detail`
+## Open
+
+- **Which shift lost the 1.5 h** is still unknown. Add `"workedHours": 6.5` to it
+  and the 07/09–20/09 estimate falls to $4,046.53, leaving a clean $207.18
+  variance. If the short shift was 19/09 itself, the loading claim is $168.33
+  rather than $207.18.
+- **The 24 and 25/08 orientation dates are inferred** from the 09/09 payslip
+  (16.00 orientation units) — they are not in RosterOn. Confirm with payroll.
+- The app's contract card now shows the exact rate ($51.7947) with the published
+  rounded figure ($51.79) beside it.

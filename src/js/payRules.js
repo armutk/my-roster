@@ -52,11 +52,12 @@
    * For RN GRADE 2 YEAR 7 (YP8) the two differ by a fraction of a cent because the
    * published hourly figure is rounded:
    *     $1,968.20 / 38 = $51.794736...  -> published as $51.79
-   * `hourlyRateMode` below controls which is used. Default 'published' matches the
-   * rate stated on the employee's own paperwork and the Appendix 2 printed figure.
+   * `hourlyRateMode` below controls which is used. Default 'exact', because that is
+   * the rate Mercy payroll actually pays: both real payslips print 51.7947 and round
+   * each 8-hour shift to 414.36. 'published' understates every shift by 4 cents.
    * ------------------------------------------------------------------ */
 
-  const hourlyRateMode = 'published'; // 'published' | 'exact'
+  const hourlyRateMode = 'exact'; // 'published' | 'exact'
 
   const baseRate = {
     label: 'Base hourly rate',
@@ -419,6 +420,28 @@
   };
 
   /* ------------------------------------------------------------------ *
+   * Laundry allowance — Appendix 2, Part 2 (Allowances)
+   *
+   * Paid per shift worked, orientation shifts included. Rate taken from the two
+   * real payslips, which each print 8.00 units at $0.6000 for 8 paid shifts.
+   * payEngine.js applies it to every shift automatically; set
+   * `laundryAllowance: false` on a shift to suppress it.
+   * ------------------------------------------------------------------ */
+
+  const laundryAllowance = {
+    label: 'Laundry Allowance – Unit/Shift',
+    source:
+      'Agreement Appendix 2, Part 2 — Allowances (Laundry); rate confirmed on payslips 09/09/2026 and 23/09/2026',
+    agreementClause: 'Appendix 2, Part 2',
+    calculationMethod:
+      'Flat amount per shift worked, orientation included. Not pro-rated by shift length.',
+    verified: true,
+    table: [
+      { effectiveFrom: '2026-08-24', amount: 0.60, note: 'First observed on the 24/08/2026 pay period. Earlier rate not checked.' },
+    ],
+  };
+
+  /* ------------------------------------------------------------------ *
    * Things this engine deliberately does NOT calculate.
    * Surfaced in the UI so the estimate is never mistaken for a payslip.
    * ------------------------------------------------------------------ */
@@ -487,6 +510,7 @@
     publicHolidays,
     overtime,
     otherAllowances,
+    laundryAllowance,
     exclusions,
     rateOn,
     baseHourlyRateOn,

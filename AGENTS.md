@@ -112,6 +112,20 @@ window are retained, and history is never wiped. Paid hours come from an exact
 shift-type time match where possible; otherwise it deducts the cl 44.1(a)
 30-minute meal break and flags the shift for review.
 
+### Actual hours and orientation shifts
+
+- **`workedHours` on a shift beats `paidHours`.** When she finishes early, set
+  `"workedHours": 6.5` and leave `paidHours` as the rostered figure. The engine
+  pays the recorded hours, returns `rosteredHours` + `workedHoursRecorded`, and
+  raises an informational note instead of a cl 44.1(a) meal-break warning.
+- **Orientation shifts are ordinary-rate day shifts** in the data, named in
+  `note` and flagged `"pinned": true`. 24 and 25/08/2026 were never in the
+  RosterOn feed (it starts 26/08) and their dates are inferred from the 09/09
+  payslip; 08/09/2026 is in the 26 Aug fixture and is paid as "Orientation
+  Shift" on the 23/09 payslip. A pinned shift is never removed by an import and
+  is never overwritten by an imported row for the same date, because the 9 Sep
+  feed dropped 08/09 and that is how the shift went missing.
+
 ### Never hand-edit `ROSTER_FALLBACK` in `app.js`
 
 It is generated. Run `node tools/sync_fallback.js`. Those two copies silently
@@ -153,8 +167,14 @@ Each of these contradicts the intuitive assumption. Do not "simplify" them away:
   shift, and flags weekly hours over 38 as informational only.
 - **Part-time hourly = 1/38th of the Appendix 2 weekly salary** (cl 18.3).
   Appendix 2's "indicative hourly rate" is rounded — $1,968.20/38 = $51.7947,
-  published as $51.79. `hourlyRateMode` in `payRules.js` selects which is used;
-  default `'published'` matches the employee's paperwork.
+  published as $51.79. `hourlyRateMode` in `payRules.js` is `'exact'`, because
+  that is the rate Mercy payroll actually pays: both real payslips print 51.7947
+  and round each 8 h shift to $414.36. `'published'` understates every shift by 4c.
+- **Laundry allowance is per shift worked** — Appendix 2, Part 2, $0.60, not
+  pro-rated, and it applies to orientation shifts too. Both real payslips show
+  8.00 units for 8 paid shifts. It is `payRules.laundryAllowance`, applied
+  automatically by `payEngine.js`; `laundryAllowance: false` on a shift
+  suppresses it.
 - **Unpaid meal break is 30–60 min** (cl 44.1(a)); a *missed* meal break is paid
   at ordinary rate +50% (cl 44.1(c)), applied only when flagged on a shift.
 
@@ -183,9 +203,10 @@ base-rate step is 30/11/2026 → $51.92 (already in the table).
 ### Scope
 
 Estimates are **gross, before tax and super**, for planning only. Exclusions are
-listed in `payRules.exclusions` and shown in the UI. Ahmed has been advised to
-check a shift or two against a real payslip — that reconciliation has **not**
-happened yet.
+listed in `payRules.exclusions` and shown in the UI. Both payslips issued so far
+have been reconciled against the roster (`docs/payslip-reconciliation-*.md`), and
+the app's own estimate has been lined up against them
+(`docs/app-vs-payslip.md`, `tools/payslip_compare.js`).
 
 ---
 
@@ -195,23 +216,30 @@ There is no test framework. Verify by running things, and **show evidence rather
 than asserting success**:
 
 - **Pay logic:** `node` against `payRules.js` + `payEngine.js` (both attach to
-  `globalThis`, so `eval(fs.readFileSync(...))` works). Hand-check known values:
-  weekday day $414.32 · weekday afternoon $450.92 · Saturday day $621.48 ·
-  Saturday/Sunday afternoon $658.08 · public holiday afternoon $865.24.
-  Current totals: **59 shifts / 484 h / $29,349.12** (through 10 Dec 2026).
+  `globalThis`, so `eval(fs.readFileSync(...))` works). Hand-check known values,
+  each including the $0.60 laundry allowance: weekday day $414.96 · weekday
+  afternoon $451.56 · Saturday day $622.14 · Saturday/Sunday afternoon $658.74 ·
+  public holiday afternoon $865.92.
+  Current totals: **62 shifts / 508 h / $30,631.32** (through 10 Dec 2026).
+- **Against a real payslip:** `node tools/payslip_compare.js <from> <to> --detail`
+  runs the same engine over one period and prints the fortnight total. It must
+  reproduce a payslip exactly when the roster data is complete:
+  `2026-08-24 2026-09-06` → $3,429.48 (matches the 09/09/2026 payslip to the cent).
 - **Importer:** `node tools/import_rosteron.js tools/fixtures/rosteron-2026-09-09-normalized.txt --dry`
-  parses 23 shifts, retains six historical shifts, and reports no changes.
-  `rosteron-2026-09-09.txt` preserves Ahmed's supplied text (month headings,
-  ordinal dates, 12-hour times); the normalized fixture converts only that
-  layout to the importer's day/date header and 24-hour times. Generic
+  parses 23 shifts, retains six historical shifts, keeps three pinned shifts and
+  reports no changes. `rosteron-2026-09-09.txt` preserves Ahmed's supplied text
+  (month headings, ordinal dates, 12-hour times); the normalized fixture converts
+  only that layout to the importer's day/date header and 24-hour times. Generic
   "Rostered" status is omitted; no status was supplied for 16 Oct.
-  The old 26 Aug fixture still parses 22 shifts: its dry run now adds 8 Sep,
-  changes 19 Sep PM to AM, and removes the eight newly published October shifts.
-  These are expected historical differences; never write that old fixture over
-  the current roster.
-- **UI:** serve locally (`python -m http.server 8093`) and drive the DOM. Check
-  all five views render, no horizontal overflow at 375 px, both themes, and the
-  console is clean.
+  The old 26 Aug fixture still parses 22 shifts: its dry run changes 19 Sep PM to
+  AM and removes the eight newly published October shifts. These are expected
+  historical differences; never write that old fixture over the current roster.
+- **UI:** serve locally (`python -m http.server 8093`) and drive the DOM with
+  `python3 tools/ui_check.py` (keep the server running in another shell). Browser
+  Use is unavailable on this VPS, so the script drives the cached Playwright
+  headless shell over CDP: it clicks all five views, flags `NaN`/`undefined`
+  text, prints the console errors, and with `--pay` prints the Pay view's money
+  lines. Check no horizontal overflow at 375 px and both themes too.
 - **Service worker:** it caches aggressively. When testing changes, unregister it
   and clear caches, or you will debug a stale build. Bump `CACHE_NAME` on release.
 
@@ -260,8 +288,9 @@ than asserting success**:
       actual worked hours were 62.5 against 64 nominal. One shortfall stands:
       weekend penalty paid on 2 of 3 weekend shifts, **Sat 19/09** uncoded,
       −$207.18 (or $168.33 if the early finish was that same shift). Query draft:
-      `docs/payroll-query-email.md`, unsent. Public holiday at 200% still
-      unchecked.
+      `docs/payroll-query-email.md`, unsent. Which shift lost the 1.5 h is still
+      unknown — record it with `workedHours` on that shift once known. Public
+      holiday at 200% still unchecked.
 - [x] **Reconcile the 24/08–06/09/2026 payslip** — done, see
       `docs/payslip-reconciliation-2026-09-06.md`. **No discrepancies**: all four
       pay lines tie to the roster (32 buddy + 16 ordinary + 2 orientation days),
@@ -270,11 +299,21 @@ than asserting success**:
       payslip to the cent. Open question only: SL accrual runs at 4.61% of hours
       (12 days/yr equivalent) against a possible 15-day entitlement — needs the
       personal leave clause quoted before it goes to payroll.
+- [ ] **Push the app-vs-payslip fixes** — rate mode `exact`, laundry allowance,
+      three pinned orientation shifts, `workedHours` support, contract card shows
+      $51.7947. Verified end to end on 23 Sep: the engine reproduces the 09/09
+      payslip at $3,429.48 to the cent, the 07/09–20/09 estimate is $4,124.22
+      against $3,839.33 paid (the $284.89 gap is the one uncoded 19/09 weekend
+      penalty), `tools/ui_check.py` reports all five views clean, and both
+      fixtures re-import without losing 08/09. Cache is `my-roster-v7`; the Pages
+      deploy waits on Ahmed's go-ahead.
+- [ ] **Confirm the 24 and 25/08/2026 orientation dates** with payroll — inferred
+      from the 09/09 payslip, not present in RosterOn.
 - [ ] **Sunday night allowance** and **morning shift window** need confirming
       with payroll (§5).
 - [ ] **Password change** — Mercy issues the employee number as both username and
       password; Ahmed was advised to have it changed. Status unknown.
-- [ ] **Roster beyond 16 Oct 2026** — re-import when published.
+- [ ] **Roster beyond 10 Dec 2026** — re-import when published.
 - [ ] Multi-user support (her roster + his) was in the original brief as future
       work. Not started; would need a data-model change.
 
@@ -306,3 +345,28 @@ RosterOn: `WMH Neonatal Postnatal Support Program`. Live capture:
 `tools/fixtures/rosteron-2026-09-19.txt`. Working clone:
 `/root/workspace/my-roster`. Released with cache `my-roster-v6`.
 Current totals: **59 shifts / 484 h / $29,349.12** estimated gross.
+
+## 12. App-versus-payslip fixes — 23 Sep 2026
+
+Both real payslips (09/09 and 23/09) were compared against the engine, and the
+estimate was wrong for three reasons. Fixed:
+
+- `hourlyRateMode` moved from `published` to `exact` — Mercy pays the 1/38th
+  figure $51.7947, and $51.79 understates every 8-hour shift by about 4 cents.
+- The $0.60 laundry allowance per worked shift is now modelled (it appears on
+  both payslips), including orientation shifts.
+- The three orientation days are in the data for the first time: 24 and 25/08
+  (inferred from the 09/09 payslip) and 08/09. They carry `"pinned": true`,
+  which the importer honours, because the 9 Sep refresh dropped 08/09.
+- `workedHours` on a shift now beats `paidHours`, so a recorded early finish is
+  paid as worked while the rostered figure stays visible for reference.
+
+Result: 24/08–06/09 reproduces the payslip at **$3,429.48 to the cent**. For
+07/09–20/09 the estimate is **$4,124.22** against **$3,839.33** paid; the whole
+$284.89 gap is the 19/09 Saturday weekend penalty Mercy left uncoded, which the
+app cannot fix and is now a payroll query (draft at
+`docs/payroll-query-email.md`, still unsent). Totals are now **62 shifts /
+508 h / $30,631.32**. New tools: `tools/payslip_compare.js` and
+`tools/ui_check.py` (CDP-driven UI check, since Browser Use is unavailable
+here). Comparison detail: `docs/app-vs-payslip.md`. Not yet pushed — the Pages
+release waits on Ahmed.
