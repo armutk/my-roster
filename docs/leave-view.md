@@ -49,8 +49,9 @@ As at 23 Sep 2026, with the roster running to 10 Dec 2026:
 | Personal leave | 6.95 h | 23.38 h |
 
 `Leave now` is the 23/09 payslip balance plus accrual on the 24 paid hours since
-20/09. The projection adds the 43 remaining rostered shifts (356 paid hours).
-Leave taken, or shifts not worked, reduce it.
+20/09. The projection accrues over every paid hour from 20/09 to 10 Dec, which is
+**380 h**: the same 24 h already worked, plus the 356 h still rostered across 43
+shifts. Leave taken, or shifts not worked, reduce it.
 
 ## Verifying it
 

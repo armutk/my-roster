@@ -440,6 +440,8 @@ Live estimate at 23 Sep 2026, roster running to 10 Dec 2026:
 | Personal leave | 6.95 h | 23.38 h |
 
 `Leave now` is the payslip balance plus accrual on the paid hours since 20/09.
-The projection adds the 43 remaining rostered shifts (356 paid hours). Leave
+The projection accrues over every paid hour from the 20/09 anchor to the last
+rostered shift (10 Dec), which is 380 h: the 24 h already worked since the anchor
+plus the 43 remaining rostered shifts (356 paid hours). Leave
 taken, or shifts not worked, reduce it. Pay totals are unaffected: still
 62 shifts / 508 h / $30,631.32.
