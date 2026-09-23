@@ -69,18 +69,26 @@ src/css/style.css             all styling, theme tokens at the top
 src/js/app.js                 UI, rendering, local edits (+ a GENERATED fallback copy)
 src/js/payRules.js            EA rates: clause-referenced, effective-dated
 src/js/payEngine.js           per-shift gross pay calculation
+src/js/leaveRules.js          leave accrual rates + payslip anchors (evidence-dated)
+src/js/leaveEngine.js         leave balance = payslip anchor + accrual on later shifts
 tools/import_rosteron.js      RosterOn page text -> roster.json (prints a diff)
+tools/leave_check.js          reproduces both payslip balances; prints the live estimate
 tools/sync_fallback.js        roster.json -> ROSTER_FALLBACK inside app.js
 tools/bookmarklet.js          builds tools/bookmarklet.txt (one-click page grab)
 tools/generate_icons.py       regenerates app icons (pure stdlib, no Pillow)
 tools/fixtures/               real RosterOn output, used to test the importer
 ```
 
-**Views:** Home, Roster, Calendar, Stats, Pay — bottom nav, one-handed mobile use.
+**Views:** Home, Roster, Calendar, Stats, Pay, Leave — bottom nav, one-handed mobile use.
 
 **Deliberate separation:** `payEngine.js` never hardcodes a rate; `payRules.js`
 never renders. EA rules change on their own schedule, so rates stay isolated and
-auditable. Keep it that way.
+auditable. Keep it that way. Leave follows the same split: `leaveRules.js` holds
+rates and payslip anchors, `leaveEngine.js` calculates, `app.js` renders.
+
+**Leave is not pay.** Never fold an accrual into a gross figure, and never put a
+leave rate in `payRules.js`. A roster can never tell you a leave balance; only a
+payslip can (§13).
 
 ---
 
@@ -234,12 +242,16 @@ than asserting success**:
   The old 26 Aug fixture still parses 22 shifts: its dry run changes 19 Sep PM to
   AM and removes the eight newly published October shifts. These are expected
   historical differences; never write that old fixture over the current roster.
+- **Leave logic:** `node tools/leave_check.js` — exits non-zero if any accrual
+  rate stops reproducing a payslip balance. Both payslips must pass. Add a new
+  payslip as a new anchor; never edit an existing one.
 - **UI:** serve locally (`python -m http.server 8093`) and drive the DOM with
   `python3 tools/ui_check.py` (keep the server running in another shell). Browser
   Use is unavailable on this VPS, so the script drives the cached Playwright
-  headless shell over CDP: it clicks all five views, flags `NaN`/`undefined`
+  headless shell over CDP: it clicks all six views, flags `NaN`/`undefined`
   text, prints the console errors, and with `--pay` prints the Pay view's money
-  lines. Check no horizontal overflow at 375 px and both themes too.
+  lines and with `--leave` the Leave view's balance lines. Check no horizontal
+  overflow at 375 px and both themes too.
 - **Service worker:** it caches aggressively. When testing changes, unregister it
   and clear caches, or you will debug a stale build. Bump `CACHE_NAME` on release.
 
@@ -309,9 +321,16 @@ than asserting success**:
       $51.7947. Verified end to end on 23 Sep: the engine reproduces the 09/09
       payslip at $3,429.48 to the cent, the 07/09–20/09 estimate is $4,124.22
       against $3,839.33 paid (the $284.89 gap is the one uncoded 19/09 weekend
-      penalty), `tools/ui_check.py` reports all five views clean, and both
-      fixtures re-import without losing 08/09. Cache is `my-roster-v7`; the Pages
-      deploy waits on Ahmed's go-ahead.
+      penalty), `tools/ui_check.py` reports all six views clean, and both
+      fixtures re-import without losing 08/09. Cache is `my-roster-v8`; the Pages
+      deploy waits on Ahmed's go-ahead. The Leave view rides in the same push.
+- [ ] **Personal leave accrual basis** — the payslips accrue SL at 4.6154% of
+      paid hours (12 days/yr equivalent). If the entitlement is 15 days/yr the
+      rate is short about 1.16% of hours. Needs the personal leave clause quoted
+      before it goes to payroll (§13).
+- [ ] **VIC additional week basis** — the 23/09 payslip reports 3.20 h ALW on
+      126.5 paid hours, where 1/52 would give 2.43 h. The basis is unexplained, so
+      the app reports the figure and never projects it. Ask payroll.
 - [ ] **Confirm the 24 and 25/08/2026 orientation dates** with payroll — inferred
       from the 09/09 payslip, not present in RosterOn.
 - [ ] **Sunday night allowance** and **morning shift window** need confirming
@@ -379,4 +398,48 @@ Not yet pushed — the Pages release waits on Ahmed.
 Follow-up found by the new UI check: the descriptive orientation notes made
 `.note-tag` overflow the roster view to 595px at a 375px viewport. The notes are
 now short ("Orientation Shift", "confirm date" on the two inferred dates) and
-the tag wraps; overflow is 0px on all five views at 375px and 320px.
+the tag wraps; overflow is 0px on all six views at 375px and 320px.
+
+## 13. Leave view — annual leave accrual (23 Sep 2026)
+
+Tohura asked how much leave she is accruing. **RosterOn never shows leave** — only
+a payslip carries a balance — so the view is built the opposite way round from the
+Pay view: it anchors on the balance printed on the most recent payslip and adds
+accrual on the shifts worked since that pay period. Detail:
+`docs/leave-view.md`.
+
+Payslip `Leave Balances` block, both on file:
+
+| Payslip paid | Period | Paid hours | AL | SL | LSL | ALW |
+|---|---|---|---|---|---|---|
+| 09/09/2026 | 24/08–06/09 | 64.0 | 6.15 h | 2.95 h | 0.00 h | — |
+| 23/09/2026 | 07/09–20/09 | 62.5 | 12.16 h | 5.84 h | 0.00 h | 3.20 h |
+
+Rates are **derived from those payslips, not assumed**:
+
+- **Annual leave 5/52 = 9.6154% of paid hours.** 6.15 h on 64.0 h (9.609%) and
+  6.01 h on 62.5 h (9.616%). That 5/52 is the EA's 4 weeks plus the Victorian
+  additional week. Accrual runs on **paid hours actually worked** — the 23/09
+  period accrued on 62.5 h, the early-finish figure, not the 64 h rostered.
+- **Personal leave 12/260 = 4.6154% of paid hours** (12 days/yr equivalent).
+  Open item above: a 15-day entitlement would make this short.
+
+Deliberately never projected: **LSL** (accrues on continuous service, not hours)
+and the **VIC additional week** (see the open item above). Both are reported at
+their printed figure and marked as such in the UI.
+
+Payroll rounds each period's accrual, so a balance here can sit up to about
+0.05 h from a payslip — the SL carry is 5.83 h against a printed 5.84 h for that
+reason, and `leaveRules.notes.toleranceHours` records it. The rate is exact.
+
+Live estimate at 23 Sep 2026, roster running to 10 Dec 2026:
+
+| | Now | If every rostered shift to 10 Dec is worked |
+|---|---|---|
+| Annual leave | 14.47 h (1.81 days at 8 h) | 48.70 h (6.09 days) |
+| Personal leave | 6.95 h | 23.38 h |
+
+`Leave now` is the payslip balance plus accrual on the paid hours since 20/09.
+The projection adds the 43 remaining rostered shifts (356 paid hours). Leave
+taken, or shifts not worked, reduce it. Pay totals are unaffected: still
+62 shifts / 508 h / $30,631.32.
