@@ -251,9 +251,13 @@ than asserting success**:
 
 ## 9. Open items
 
-- [ ] **Reconcile against a real payslip** — particularly the $36.60 afternoon
-      allowance and the 25 Sep public holiday at 200%. Nothing has been checked
-      against actual Mercy payroll output.
+- [ ] **Reconcile against a real payslip** — first payslip check done for
+      07/09–20/09/2026, see `docs/payslip-reconciliation-2026-09-20.md`. The
+      $36.60 flat afternoon allowance is **confirmed** (5/5 shifts, including
+      weekend afternoons) and payroll's base hourly is the exact 1/38th figure
+      (51.7947), not the published 51.79. Two payroll shortfalls found: weekend
+      penalty paid on 2 of 3 weekend shifts (−$207.18) and 1.5 h missing from
+      ordinary hours (−$77.69). Public holiday at 200% still unchecked.
 - [ ] **Sunday night allowance** and **morning shift window** need confirming
       with payroll (§5).
 - [ ] **Password change** — Mercy issues the employee number as both username and
