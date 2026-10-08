@@ -258,7 +258,7 @@ than asserting success**:
   each including the $0.60 laundry allowance: weekday day $414.96 · weekday
   afternoon $451.56 · Saturday day $622.14 · Saturday/Sunday afternoon $658.74 ·
   public holiday afternoon $865.92.
-  Current totals: **62 shifts / 508 h / $30,631.32** (through 10 Dec 2026).
+  Current totals: **72 shifts / 588 h / $35,976.82** (through 30 Dec 2026).
 - **Against a real payslip:** `node tools/payslip_compare.js <from> <to> --detail`
   runs the same engine over one period and prints the fortnight total. It must
   reproduce a payslip exactly when the roster data is complete:
@@ -346,14 +346,8 @@ than asserting success**:
       payslip to the cent. Open question only: SL accrual runs at 4.61% of hours
       (12 days/yr equivalent) against a possible 15-day entitlement — needs the
       personal leave clause quoted before it goes to payroll.
-- [ ] **Push the app-vs-payslip fixes** — rate mode `exact`, laundry allowance,
-      three pinned orientation shifts, `workedHours` support, contract card shows
-      $51.7947. Verified end to end on 23 Sep: the engine reproduces the 09/09
-      payslip at $3,429.48 to the cent, the 07/09–20/09 estimate is $4,124.22
-      against $3,839.33 paid (the $284.89 gap is the one uncoded 19/09 weekend
-      penalty), `tools/ui_check.py` reports all six views clean, and both
-      fixtures re-import without losing 08/09. Cache is `my-roster-v8`; the Pages
-      deploy waits on Ahmed's go-ahead. The Leave view rides in the same push.
+- [x] **Push the app-vs-payslip fixes** — pushed 23 Sep 2026 (598c6a4, cache
+      `my-roster-v8`) and confirmed live on 8 Oct 2026.
 - [ ] **Personal leave accrual basis** — the payslips accrue SL at 4.6154% of
       paid hours (12 days/yr equivalent). If the entitlement is 15 days/yr the
       rate is short about 1.16% of hours. Needs the personal leave clause quoted
@@ -365,9 +359,19 @@ than asserting success**:
       from the 09/09 payslip, not present in RosterOn.
 - [ ] **Sunday night allowance** and **morning shift window** need confirming
       with payroll (§5).
-- [ ] **Password change** — Mercy issues the employee number as both username and
-      password; Ahmed was advised to have it changed. Status unknown.
-- [ ] **Roster beyond 10 Dec 2026** — re-import when published.
+- [x] **Password change** — decided 8 Oct 2026: Tohura keeps the issued password
+      (her choice). Agents must not change it or any RosterOn account setting. The
+      same value is the employee number, so the number must never appear in the
+      repo, the Pages site or the vault.
+- [ ] **Employee number in old git history** — scrubbed from the tree on 8 Oct 2026
+      (it had been committed on 23 Sep in ab9cd65, 2316f6b, 7875004 and 828a2e4).
+      Those commits still contain it on GitHub. Rewriting history needs a
+      force-push, which has not been approved.
+- [x] **Roster beyond 10 Dec 2026** — imported through 30 Dec on 8 Oct 2026; future
+      releases arrive through `my-roster-sync.timer` (§4).
+- [ ] **AFL Grand Final Friday 2027** — not yet gazetted; add it to
+      `payRules.publicHolidays` with its Business Victoria citation once published.
+      The list currently runs to 28 Dec 2027.
 - [ ] Multi-user support (her roster + his) was in the original brief as future
       work. Not started; would need a data-model change.
 
@@ -475,3 +479,20 @@ rostered shift (10 Dec), which is 380 h: the 24 h already worked since the ancho
 plus the 43 remaining rostered shifts (356 paid hours). Leave
 taken, or shifts not worked, reduce it. Pay totals are unaffected: still
 62 shifts / 508 h / $30,631.32.
+
+## 14. Automatic sync, holidays and scrub — 8 Oct 2026
+
+- **Scrub:** the employee number (which is also the RosterOn username and password)
+  was removed from `src/js/leaveRules.js` and four docs. The payroll email drafts
+  now carry an `[employee number]` placeholder. Earlier commits still contain it.
+- **Public holidays:** the full Victorian metropolitan lists for 2026 and 2027 are in
+  `payRules.publicHolidays`, cited to Business Victoria. That includes Christmas,
+  Boxing Day, Mon 28/12/2026 (Boxing Day additional day), and Mon 27 and Tue
+  28/12/2027. The Pay view lists only holidays inside the loaded roster.
+- **Roster:** the first `tools/sync_rosteron.js --apply` added 10 shifts (14–30 Dec,
+  +80 h) and labelled 13 Oct "Buddy Shift". There were no changes or removals.
+  RosterOn listed 46 shifts, 10 Oct–30 Dec. Cache `my-roster-v9`. Totals:
+  **72 shifts / 588 h / $35,976.82**. 28 Dec is now priced at the 200% rate.
+- **Automation:** `my-roster-sync.timer` runs fortnightly on Sundays at about 18:00
+  Melbourne (§4, `docs/rosteron-sync.md`).
+
