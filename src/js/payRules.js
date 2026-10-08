@@ -287,14 +287,32 @@
    * Werribee Mercy Hospital is in metropolitan Melbourne, so the metropolitan
    * Victorian public holiday list applies.
    *
-   * Only dates relevant to loaded roster periods need to be listed here.
+   * The full metropolitan list for 2026 and 2027 is kept here, each year cited to its
+   * Business Victoria page. The Pay view shows only the dates inside the loaded roster.
+   * Extend the list before a roster runs past the last listed year.
    * ------------------------------------------------------------------ */
 
   const publicHolidays = {
     source: 'Business Victoria — Victorian public holidays (metropolitan Melbourne)',
+    sourceUrls: [
+      'https://business.vic.gov.au/business-information/public-holidays/victorian-public-holidays-2026',
+      'https://business.vic.gov.au/business-information/public-holidays/victorian-public-holidays-2027',
+    ],
     jurisdiction: 'Victoria (metropolitan)',
     calculationMethod: 'A shift segment falling on one of these dates is paid at the clause 56.5(a) public holiday rate.',
     dates: [
+      // 2026 — https://business.vic.gov.au/business-information/public-holidays/victorian-public-holidays-2026
+      // (page last updated 21 May 2026; retrieved 8 Oct 2026)
+      { date: '2026-01-01', name: 'New Year\'s Day', verified: true },
+      { date: '2026-01-26', name: 'Australia Day', verified: true },
+      { date: '2026-03-09', name: 'Labour Day', verified: true },
+      { date: '2026-04-03', name: 'Good Friday', verified: true },
+      { date: '2026-04-04', name: 'Saturday before Easter Sunday', verified: true },
+      { date: '2026-04-05', name: 'Easter Sunday', verified: true },
+      { date: '2026-04-06', name: 'Easter Monday', verified: true },
+      { date: '2026-04-25', name: 'ANZAC Day', verified: true,
+        note: 'Saturday. No replacement holiday when ANZAC Day falls on a weekend.' },
+      { date: '2026-06-08', name: 'King\'s Birthday', verified: true },
       {
         date: '2026-09-25',
         name: 'Friday before the AFL Grand Final',
@@ -302,12 +320,37 @@
         note:
           'Confirmed as a Victorian public holiday for 2026. The exact date of this holiday depends on the AFL fixture and is gazetted each year — re-confirm if the fixture changes.',
       },
-      {
-        date: '2026-11-03',
-        name: 'Melbourne Cup Day',
-        verified: true,
-        note: 'Metropolitan Melbourne. Outside the current roster period; listed for future roster loads.',
-      },
+      { date: '2026-11-03', name: 'Melbourne Cup Day', verified: true,
+        note: 'Metropolitan Melbourne.' },
+      { date: '2026-12-25', name: 'Christmas Day', verified: true },
+      { date: '2026-12-26', name: 'Boxing Day', verified: true,
+        note: 'Saturday.' },
+      { date: '2026-12-28', name: 'Boxing Day (additional day)', verified: true,
+        note: 'Boxing Day falls on a Saturday, so the following Monday is an additional public holiday.' },
+      // 2027 — https://business.vic.gov.au/business-information/public-holidays/victorian-public-holidays-2027
+      // (page last updated 2 Dec 2025; retrieved 8 Oct 2026)
+      // Friday before the AFL Grand Final 2027 is "subject to AFL schedule" — add it
+      // with the gazetted date once Business Victoria publishes it.
+      { date: '2027-01-01', name: 'New Year\'s Day', verified: true },
+      { date: '2027-01-26', name: 'Australia Day', verified: true },
+      { date: '2027-03-08', name: 'Labour Day', verified: true },
+      { date: '2027-03-26', name: 'Good Friday', verified: true },
+      { date: '2027-03-27', name: 'Saturday before Easter Sunday', verified: true },
+      { date: '2027-03-28', name: 'Easter Sunday', verified: true },
+      { date: '2027-03-29', name: 'Easter Monday', verified: true },
+      { date: '2027-04-25', name: 'ANZAC Day', verified: true,
+        note: 'Sunday. No replacement holiday when ANZAC Day falls on a weekend.' },
+      { date: '2027-06-14', name: 'King\'s Birthday', verified: true },
+      { date: '2027-11-02', name: 'Melbourne Cup Day', verified: true,
+        note: 'Metropolitan Melbourne.' },
+      { date: '2027-12-25', name: 'Christmas Day', verified: true,
+        note: 'Saturday.' },
+      { date: '2027-12-26', name: 'Boxing Day', verified: true,
+        note: 'Sunday.' },
+      { date: '2027-12-27', name: 'Christmas Day (additional day)', verified: true,
+        note: 'Christmas Day falls on a Saturday, so the following Monday is an additional public holiday.' },
+      { date: '2027-12-28', name: 'Boxing Day (additional day)', verified: true,
+        note: 'Boxing Day falls on a Sunday, so the following Tuesday is an additional public holiday.' },
     ],
   };
 

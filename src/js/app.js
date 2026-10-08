@@ -1566,6 +1566,7 @@
       <div class="pay-callout">
         <strong>Public holidays applied</strong>
         ${R.publicHolidays.dates
+          .filter((h) => !shifts.length || (h.date >= shifts[0].date && h.date <= shifts[shifts.length - 1].date))
           .map((h) => `<p style="margin:6px 0 0;">${h.date} — ${h.name}${h.note ? `<br><span style="opacity:0.75;">${h.note}</span>` : ''}</p>`)
           .join('')}
       </div>
