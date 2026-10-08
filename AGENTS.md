@@ -51,6 +51,9 @@ Keep the home screen fast and uncluttered — that goal outranks new features.
    clause reference, source and effective date. Never invent a rate to fill a
    gap — mark it `verified: false` and let the UI show *Needs verification*.
 4. **Don't push or deploy unless asked.** Ahmed asks explicitly when he wants it live.
+   Standing exception, approved by Ahmed on 8 Oct 2026: the `my-roster-sync.timer`
+   run of `tools/sync_rosteron.js --apply` may push a clean RosterOn roster update
+   (§4). Every other change still waits for him.
 
 ---
 
@@ -72,6 +75,8 @@ src/js/payEngine.js           per-shift gross pay calculation
 src/js/leaveRules.js          leave accrual rates + payslip anchors (evidence-dated)
 src/js/leaveEngine.js         leave balance = payslip anchor + accrual on later shifts
 tools/import_rosteron.js      RosterOn page text -> roster.json (prints a diff)
+tools/fetch_rosteron.js       headless RosterOn login (Bitwarden) -> raw roster page text
+tools/sync_rosteron.js        fetch + dry diff + rehearsal + guards; --apply commits & pushes
 tools/leave_check.js          reproduces both payslip balances; prints the live estimate
 tools/sync_fallback.js        roster.json -> ROSTER_FALLBACK inside app.js
 tools/bookmarklet.js          builds tools/bookmarklet.txt (one-click page grab)
@@ -101,7 +106,32 @@ https://mha.allocate-cloud.com.au/MHAPROD/Mobile/ → Roster
 **Never transcribe a handwritten roster or a photo.** This has already gone
 wrong once (§7).
 
-### Updating it
+### Updating it — automatic (fortnightly)
+
+`tools/sync_rosteron.js` does the whole loop. Details: `docs/rosteron-sync.md`.
+
+- `node tools/sync_rosteron.js` is a **dry run**. It logs in headlessly with
+  `tools/fetch_rosteron.js`, runs `import_rosteron.js --dry`, rehearses the write
+  path in a scratch copy and verifies it, then writes a summary. Nothing in the
+  clone changes.
+- `--apply` is the real write path: import, fallback, `CACHE_NAME` bump, commit,
+  push, and a check that `origin/main` matches the commit. `--verify-live` also
+  waits until Pages serves the new cache.
+- Safety stops never write: unparsed rows or a layout change, a truncated list
+  (removals dated after RosterOn's last row), MFA/captcha, a rejected login, or an
+  expired password. Needs-a-human cases are never auto-applied: more than 4
+  removals or 6 changes, a last date moving earlier, or inferred paid hours.
+- Output stays outside the repo, in `/root/.local/state/my-roster-sync/` (0700):
+  `latest-summary.md`, `last-run.json`, `summaries/`, and `raw/` (pruned at 60 days).
+- Schedule: `my-roster-sync.timer` (systemd, installed 8 Oct 2026) fires Sundays at
+  about 18:00 Melbourne. `--min-interval-days 9` turns that into fortnightly; a
+  failed or blocked run is retried the next Sunday. Notifications go through
+  `hermes send --to telegram`, whose home channel is Ahmed's DM. A no-change run
+  stays silent.
+- The Mobile Roster list looks like a rolling window of about 12 weeks, not a
+  fortnightly release, so each run usually adds a handful of shifts at the far end.
+
+### Updating it — by hand
 
 1. Log in to RosterOn ESS with the Bitwarden item (see constraint 1) and open
    the Roster page.
