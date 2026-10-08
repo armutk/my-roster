@@ -9,7 +9,7 @@ built the other way round from the Pay view: instead of calculating from the
 roster alone, it anchors on the balance printed on the most recent payslip and
 adds accrual on the shifts worked since that pay period.
 
-Both payslips on file (`E005885`, paid 09/09/2026 and 23/09/2026) print a
+Both payslips on file (paid 09/09/2026 and 23/09/2026) print a
 `Leave Balances` block: AL, SL, LSL and VIC Additional 1wk, all in hours.
 
 | Payslip paid | Period | Paid hours | AL balance | SL balance | LSL | ALW |

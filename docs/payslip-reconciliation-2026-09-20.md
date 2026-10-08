@@ -2,7 +2,7 @@
 
 First real payslip checked against the roster (open item in AGENTS.md §9).
 Sources: `tools/fixtures/rosteron-2026-08-26.txt`, `tools/fixtures/rosteron-2026-09-09.txt`,
-`src/data/roster.json`, and the Mercy payslip `E005885_Payslip_2026-09-20.PDF`
+`src/data/roster.json`, and the Mercy payslip `<employee-no>_Payslip_2026-09-20.PDF`
 (payment date 23/09/2026).
 
 ## Roster for the period (RosterOn)

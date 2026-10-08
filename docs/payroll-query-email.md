@@ -9,7 +9,7 @@ ordinary hours is explained (early finish) and is not raised.
 
 **To:** [Mercy payroll mailbox]
 **Cc:** [Nurse Unit Manager]
-**Subject:** Pay enquiry — payslip 23/09/2026, period 07/09/2026 to 20/09/2026 (E005885)
+**Subject:** Pay enquiry — payslip 23/09/2026, period 07/09/2026 to 20/09/2026 ([employee number])
 
 ---
 
@@ -18,7 +18,7 @@ Hello,
 I am writing about my payslip for the pay period 07/09/2026 to 20/09/2026, paid
 23/09/2026.
 
-Employee: Tohura Khanam, E005885, RN Gr 2 Yr 7 (YP8), Werribee Mercy Hospital.
+Employee: Tohura Khanam, [employee number], RN Gr 2 Yr 7 (YP8), Werribee Mercy Hospital.
 Payslip shows unit WMH D2, Childbirth Unit; my RosterOn roster shows WMH
 Neonatal Postnatal Support Program.
 
@@ -43,5 +43,5 @@ I can send my RosterOn shift list for the period if that helps.
 Thank you,
 
 Tohura Khanam
-Employee E005885
+Employee [employee number]
 [phone]

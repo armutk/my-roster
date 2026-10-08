@@ -1,6 +1,6 @@
 /* leaveRules.js — leave accrual rules, evidence-dated.
  *
- * Every rate here comes from a real Mercy payslip (employee E005885) or from the
+ * Every rate here comes from a real Mercy payslip or from the
  * enterprise agreement. Nothing is assumed. If a rate cannot be evidenced it is
  * marked verified:false and the UI shows "needs verification" instead of a number.
  *
@@ -79,7 +79,7 @@
       asAt: '2026-09-06',
       paymentDate: '2026-09-09',
       period: '24/08/2026 to 06/09/2026',
-      source: 'Payslip E005885, paid 09/09/2026',
+      source: 'Mercy payslip, paid 09/09/2026',
       paidHoursInPeriod: 64.0,
       balances: { AL: 6.15, SL: 2.95, LSL: 0.0, ALW: null },
     },
@@ -87,7 +87,7 @@
       asAt: '2026-09-20',
       paymentDate: '2026-09-23',
       period: '07/09/2026 to 20/09/2026',
-      source: 'Payslip E005885, paid 23/09/2026',
+      source: 'Mercy payslip, paid 23/09/2026',
       paidHoursInPeriod: 62.5,
       balances: { AL: 12.16, SL: 5.84, LSL: 0.0, ALW: 3.2 },
     },

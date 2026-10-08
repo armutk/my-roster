@@ -3,7 +3,7 @@
 Second real payslip checked against the roster, and the earliest one on file
 (payment date 09/09/2026, first payslip of the Mercy engagement).
 Sources: `tools/fixtures/rosteron-2026-08-26.txt`, `src/data/roster.json`
-(sourceRetrieved 19 Sep 2026), payslip `E005885_Payslip_2026-09-06.PDF`.
+(sourceRetrieved 19 Sep 2026), payslip `<employee-no>_Payslip_2026-09-06.PDF`.
 
 ## Roster for the period
 
