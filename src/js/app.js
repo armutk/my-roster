@@ -5,8 +5,8 @@
   const ROSTER_FALLBACK = {
     "meta": {
       "periodLabel": "August - December 2026",
-      "source": "RosterOn ESS (Mercy Health) \u2014 https://mha.allocate-cloud.com.au/MHAPROD/Mobile/",
-      "sourceRetrieved": "2026-09-19",
+      "source": "RosterOn ESS (Mercy Health) — https://mha.allocate-cloud.com.au/MHAPROD/Mobile/",
+      "sourceRetrieved": "2026-10-08",
       "unit": "WMH Neonatal Postnatal Support Program",
       "employee": {
         "position": "Registered Nurse",
@@ -290,7 +290,8 @@
         "shiftType": "afternoon",
         "start": "13:00",
         "end": "21:30",
-        "paidHours": 8
+        "paidHours": 8,
+        "note": "Buddy Shift"
       },
       {
         "date": "2026-10-15",
@@ -546,6 +547,86 @@
         "shiftType": "afternoon",
         "start": "13:00",
         "end": "21:30",
+        "paidHours": 8
+      },
+      {
+        "date": "2026-12-14",
+        "day": "Monday",
+        "shiftType": "day",
+        "start": "07:00",
+        "end": "15:30",
+        "paidHours": 8
+      },
+      {
+        "date": "2026-12-16",
+        "day": "Wednesday",
+        "shiftType": "afternoon",
+        "start": "13:00",
+        "end": "21:30",
+        "paidHours": 8
+      },
+      {
+        "date": "2026-12-17",
+        "day": "Thursday",
+        "shiftType": "afternoon",
+        "start": "13:00",
+        "end": "21:30",
+        "paidHours": 8
+      },
+      {
+        "date": "2026-12-19",
+        "day": "Saturday",
+        "shiftType": "afternoon",
+        "start": "13:00",
+        "end": "21:30",
+        "paidHours": 8
+      },
+      {
+        "date": "2026-12-20",
+        "day": "Sunday",
+        "shiftType": "day",
+        "start": "07:00",
+        "end": "15:30",
+        "paidHours": 8
+      },
+      {
+        "date": "2026-12-23",
+        "day": "Wednesday",
+        "shiftType": "day",
+        "start": "07:00",
+        "end": "15:30",
+        "paidHours": 8
+      },
+      {
+        "date": "2026-12-24",
+        "day": "Thursday",
+        "shiftType": "day",
+        "start": "07:00",
+        "end": "15:30",
+        "paidHours": 8
+      },
+      {
+        "date": "2026-12-27",
+        "day": "Sunday",
+        "shiftType": "afternoon",
+        "start": "13:00",
+        "end": "21:30",
+        "paidHours": 8
+      },
+      {
+        "date": "2026-12-28",
+        "day": "Monday",
+        "shiftType": "day",
+        "start": "07:00",
+        "end": "15:30",
+        "paidHours": 8
+      },
+      {
+        "date": "2026-12-30",
+        "day": "Wednesday",
+        "shiftType": "day",
+        "start": "07:00",
+        "end": "15:30",
         "paidHours": 8
       }
     ]
