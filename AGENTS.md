@@ -496,3 +496,19 @@ taken, or shifts not worked, reduce it. Pay totals are unaffected: still
 - **Automation:** `my-roster-sync.timer` runs fortnightly on Sundays at about 18:00
   Melbourne (§4, `docs/rosteron-sync.md`).
 
+## 15. Sync now button — 11 Oct 2026
+
+The Home view carries a "Sync now" card (`#syncCard`) next to the next-shift
+card. Tapping it POSTs to the token-gated Hermes endpoint
+`https://hermes.redgumlab.au/my-roster/sync` (`Authorization: Bearer <token>`)
+and polls `…/sync/status` every 5 s with a 10-minute cap, then refetches
+`roster.json` — or reloads the page outright when shifts changed, so the
+server's bumped `CACHE_NAME` is picked up on the reload.
+
+The token arrives through a personal setup link (`…?sync-token=TOKEN`);
+`app.js` stores it in localStorage (key `sync-token`) and strips it from the
+URL. **No token value ever reaches the repo** — only the endpoint URL does,
+which is safe because the endpoint is token-gated. A device with no token keeps
+the button and shows "Sync isn't set up on this device"; wrong or missing
+tokens surface the same message, not an error. Cache is now `my-roster-v10`.
+

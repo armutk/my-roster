@@ -673,6 +673,24 @@ main {
 .btn.primary { background: var(--accent); color: var(--accent-contrast); border-color: var(--accent); }
 .btn.danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 35%, transparent); background: transparent; }
 
+/* Sync now */
+.sync-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
+.sync-status { font-size: 0.82rem; color: var(--text-dim); line-height: 1.45; margin-bottom: 12px; }
+.sync-status.error { color: var(--danger); }
+.sync-btn:disabled { opacity: 0.75; cursor: default; }
+.sync-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid color-mix(in srgb, var(--accent-contrast) 35%, transparent);
+  border-top-color: var(--accent-contrast);
+  border-radius: 50%;
+  vertical-align: -2px;
+  margin-right: 8px;
+  animation: sync-spin 0.8s linear infinite;
+}
+@keyframes sync-spin { to { transform: rotate(360deg); } }
+
 .edited-banner {
   background: color-mix(in srgb, var(--afternoon-color) 13%, transparent);
   border-left: 3px solid var(--afternoon-color);

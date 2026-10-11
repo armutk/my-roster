@@ -1826,6 +1826,195 @@
     updateThemeButton();
   }
 
+  /* ================= Sync now =================
+     On-demand roster sync. A personal setup link (…?sync-token=TOKEN) stores the
+     token in localStorage; the button then asks the Hermes endpoint to run the
+     RosterOn sync and polls until it is done. The endpoint is token-gated, so the
+     URL itself is safe to publish. */
+
+  const SYNC_ENDPOINT = 'https://hermes.redgumlab.au/my-roster/sync';
+  const SYNC_STATUS_ENDPOINT = 'https://hermes.redgumlab.au/my-roster/sync/status';
+  const SYNC_TOKEN_KEY = 'sync-token';
+
+  function captureSyncToken() {
+    const params = new URLSearchParams(location.search);
+    const token = params.get('sync-token');
+    if (!token) return;
+    try {
+      localStorage.setItem(SYNC_TOKEN_KEY, token);
+    } catch (err) { /* storage unavailable — sync just stays unset up */ }
+    params.delete('sync-token');
+    const qs = params.toString();
+    history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
+  }
+
+  function syncAuthHeader() {
+    const token = localStorage.getItem(SYNC_TOKEN_KEY);
+    if (!token) return null;
+    return { Authorization: 'Bearer ' + token };
+  }
+
+  function setSyncStatus(text, isError) {
+    const el = document.getElementById('syncStatus');
+    el.textContent = text;
+    el.classList.toggle('error', Boolean(isError));
+  }
+
+  function setSyncBusy(busy) {
+    const btn = document.getElementById('syncBtn');
+    btn.disabled = busy;
+    btn.textContent = '';
+    if (busy) {
+      const spinner = document.createElement('span');
+      spinner.className = 'sync-spinner';
+      btn.appendChild(spinner);
+      btn.appendChild(document.createTextNode('Syncing…'));
+    } else {
+      btn.appendChild(document.createTextNode('Sync now'));
+    }
+  }
+
+  async function pollSyncStatus() {
+    // Runs up to 10 minutes; transient errors during polling are tolerated.
+    const deadline = Date.now() + 10 * 60 * 1000;
+    while (Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      const headers = syncAuthHeader();
+      if (!headers) return { outcome: 'no_token' };
+      let res;
+      try {
+        res = await fetch(SYNC_STATUS_ENDPOINT, { headers });
+      } catch (err) {
+        continue; // transient network error — keep polling until the deadline
+      }
+      if (res.status === 401 || res.status === 403) return { outcome: 'no_token' };
+      if (!res.ok) continue;
+      let body;
+      try {
+        body = await res.json();
+      } catch (err) {
+        continue;
+      }
+      if (body && body.running === false) {
+        const changed = Number(body.changed_shifts) ||
+          (Number(body.added) || 0) + (Number(body.changed) || 0) + (Number(body.removed) || 0);
+        return { outcome: 'done', status: body.status, changed };
+      }
+      // still running (or a malformed body) — poll again
+    }
+    return { outcome: 'timeout' };
+  }
+
+  function updateSyncButtonState() {
+    // No token yet: keep the button, and let the status line hint at setup.
+    if (!syncAuthHeader()) {
+      setSyncStatus("Sync isn't set up on this device — the setup link turns it on.");
+    }
+  }
+
+  async function refreshRosterFromServer() {
+    // Bust any cached copy (the service worker caches by full URL) and re-render
+    // without a reload — used when the sync ran but nothing changed.
+    try {
+      const res = await fetch('src/data/roster.json?bust=' + Date.now(), { cache: 'no-cache' });
+      if (!res.ok) throw new Error('fetch failed');
+      DATA = await res.json();
+      BASE_SHIFTS = DATA.shifts.map((s) => ({ ...s }));
+      rebuildShifts();
+      tick();
+    } catch (err) { /* keep what we already have */ }
+  }
+
+  async function handleSync() {
+    const btn = document.getElementById('syncBtn');
+    if (btn.disabled) return;
+
+    const headers = syncAuthHeader();
+    if (!headers) {
+      setSyncStatus("Sync isn't set up on this device. Ask Ahmed for your setup link.", true);
+      return;
+    }
+
+    setSyncBusy(true);
+    setSyncStatus('Syncing…');
+
+    let res;
+    try {
+      res = await fetch(SYNC_ENDPOINT, { method: 'POST', headers });
+    } catch (err) {
+      setSyncBusy(false);
+      setSyncStatus("RosterOn didn't respond, try again in a few minutes.", true);
+      return;
+    }
+
+    if (res.status === 429) {
+      setSyncBusy(false);
+      setSyncStatus('Sync ran recently — try again in a couple of minutes.', true);
+      return;
+    }
+    if (res.status === 401 || res.status === 403) {
+      setSyncBusy(false);
+      setSyncStatus("Sync isn't set up on this device. Ask Ahmed for your setup link.", true);
+      return;
+    }
+    if (!res.ok) {
+      setSyncBusy(false);
+      setSyncStatus("RosterOn didn't respond, try again in a few minutes.", true);
+      return;
+    }
+
+    let body;
+    try {
+      body = await res.json();
+    } catch (err) {
+      setSyncBusy(false);
+      setSyncStatus("RosterOn didn't respond, try again in a few minutes.", true);
+      return;
+    }
+    if (!body || (body.status !== 'started' && body.status !== 'already_running')) {
+      setSyncBusy(false);
+      setSyncStatus("RosterOn didn't respond, try again in a few minutes.", true);
+      return;
+    }
+
+    const result = await pollSyncStatus();
+
+    if (result.outcome === 'timeout' || result.outcome === 'no_token') {
+      setSyncBusy(false);
+      setSyncStatus("RosterOn didn't respond, try again in a few minutes.", true);
+      return;
+    }
+    if (result.status !== 'ok' && result.status !== 'no_change') {
+      setSyncBusy(false);
+      setSyncStatus("Sync hit a problem — RosterOn didn't respond, try again in a few minutes.", true);
+      return;
+    }
+
+    const n = result.changed;
+    setSyncStatus(n > 0 ? `Synced just now · ${n} shift${n === 1 ? '' : 's'} changed` : 'Synced just now · no changes');
+
+    // The server bumped CACHE_NAME when it changed the roster, so nudge the
+    // service worker to fetch the new one.
+    try {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) reg.update();
+    } catch (err) { /* offline-check is best effort */ }
+
+    if (n > 0) {
+      // skipWaiting + clients.claim make one reload enough to pick up the new
+      // shell; the page reloads itself, so leave the button as it is.
+      setTimeout(() => location.reload(), 600);
+    } else {
+      setSyncBusy(false);
+      await refreshRosterFromServer();
+    }
+  }
+
+  function initSyncButton() {
+    document.getElementById('syncBtn').addEventListener('click', handleSync);
+    updateSyncButtonState();
+  }
+
   /* ================= Install prompt ================= */
 
   let deferredInstallPrompt = null;
@@ -1887,6 +2076,7 @@
   }
 
   async function init() {
+    captureSyncToken();
     initTheme();
     DATA = await loadData();
     BASE_SHIFTS = DATA.shifts.map((s) => ({ ...s }));
@@ -1914,6 +2104,7 @@
     });
 
     initInstallPrompt();
+    initSyncButton();
     renderEditBanner();
 
     document.getElementById('editBannerReset').addEventListener('click', () => {
