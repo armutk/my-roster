@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-roster-v10';
+const CACHE_NAME = 'my-roster-v11';
 const APP_SHELL = [
   './',
   './index.html',
