@@ -677,6 +677,9 @@ main {
 .sync-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
 .sync-status { font-size: 0.82rem; color: var(--text-dim); line-height: 1.45; margin-bottom: 12px; }
 .sync-status.error { color: var(--danger); }
+.sync-setup { display: flex; gap: 8px; margin-bottom: 12px; }
+.sync-setup[hidden] { display: none; }
+.sync-setup input { flex: 1; min-width: 0; font-size: 16px; padding: 10px; border-radius: 8px; border: 1px solid var(--border, #888); background: var(--surface, transparent); color: inherit; }
 .sync-btn:disabled { opacity: 0.75; cursor: default; }
 .sync-spinner {
   display: inline-block;

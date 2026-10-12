@@ -1844,13 +1844,21 @@
   const SYNC_STATUS_ENDPOINT = 'https://hermes.redgumlab.au/my-roster/sync/status';
   const SYNC_TOKEN_KEY = 'sync-token';
 
+  // Shared by the ?sync-token= link and the "paste setup code" box: trims, rejects empty, stores.
+  function storeSyncToken(raw) {
+    const token = String(raw || '').trim();
+    if (!token) return false;
+    try {
+      localStorage.setItem(SYNC_TOKEN_KEY, token);
+    } catch (err) { return false; /* storage unavailable — sync just stays unset up */ }
+    return true;
+  }
+
   function captureSyncToken() {
     const params = new URLSearchParams(location.search);
     const token = params.get('sync-token');
     if (!token) return;
-    try {
-      localStorage.setItem(SYNC_TOKEN_KEY, token);
-    } catch (err) { /* storage unavailable — sync just stays unset up */ }
+    storeSyncToken(token);
     params.delete('sync-token');
     const qs = params.toString();
     history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
@@ -1913,11 +1921,35 @@
     return { outcome: 'timeout' };
   }
 
+  function showSyncSetup(show) {
+    const box = document.getElementById('syncSetup');
+    if (box) box.hidden = !show;
+  }
+
   function updateSyncButtonState() {
-    // No token yet: keep the button, and let the status line hint at setup.
+    // No token yet: keep the button, hint at setup and offer the paste-a-code box.
     if (!syncAuthHeader()) {
-      setSyncStatus("Sync isn't set up on this device — the setup link turns it on.");
+      setSyncStatus("Sync isn't set up on this device — paste your setup code below.");
+      showSyncSetup(true);
+    } else {
+      showSyncSetup(false);
     }
+  }
+
+  function notSetUp() {
+    setSyncStatus("Sync isn't set up on this device. Paste your setup code below.", true);
+    showSyncSetup(true);
+  }
+
+  function saveSetupCode() {
+    const input = document.getElementById('syncCode');
+    if (!storeSyncToken(input.value)) {
+      setSyncStatus('Paste the setup code first, then tap Save.', true);
+      return;
+    }
+    input.value = '';
+    showSyncSetup(false);
+    handleSync(); // retry straight away so she sees a result
   }
 
   async function refreshRosterFromServer() {
@@ -1939,7 +1971,7 @@
 
     const headers = syncAuthHeader();
     if (!headers) {
-      setSyncStatus("Sync isn't set up on this device. Ask Ahmed for your setup link.", true);
+      notSetUp();
       return;
     }
 
@@ -1962,7 +1994,7 @@
     }
     if (res.status === 401 || res.status === 403) {
       setSyncBusy(false);
-      setSyncStatus("Sync isn't set up on this device. Ask Ahmed for your setup link.", true);
+      notSetUp();
       return;
     }
     if (!res.ok) {
@@ -2020,6 +2052,8 @@
 
   function initSyncButton() {
     document.getElementById('syncBtn').addEventListener('click', handleSync);
+    document.getElementById('syncSave').addEventListener('click', saveSetupCode);
+    document.getElementById('syncCode').addEventListener('keydown', (e) => { if (e.key === 'Enter') saveSetupCode(); });
     updateSyncButtonState();
   }
 
