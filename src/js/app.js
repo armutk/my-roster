@@ -6,7 +6,7 @@
     "meta": {
       "periodLabel": "August - December 2026",
       "source": "RosterOn ESS (Mercy Health) — https://mha.allocate-cloud.com.au/MHAPROD/Mobile/",
-      "sourceRetrieved": "2026-10-11",
+      "sourceRetrieved": "2026-10-15",
       "unit": "WMH Neonatal Postnatal Support Program",
       "employee": {
         "position": "Registered Nurse",
@@ -310,6 +310,14 @@
         "paidHours": 8
       },
       {
+        "date": "2026-10-17",
+        "day": "Saturday",
+        "shiftType": "afternoon",
+        "start": "13:00",
+        "end": "21:30",
+        "paidHours": 8
+      },
+      {
         "date": "2026-10-20",
         "day": "Tuesday",
         "shiftType": "day",
@@ -427,7 +435,8 @@
         "shiftType": "day",
         "start": "07:00",
         "end": "15:30",
-        "paidHours": 8
+        "paidHours": 8,
+        "note": "Buddy Shift"
       },
       {
         "date": "2026-11-15",
@@ -632,6 +641,22 @@
       {
         "date": "2027-01-03",
         "day": "Sunday",
+        "shiftType": "afternoon",
+        "start": "13:00",
+        "end": "21:30",
+        "paidHours": 8
+      },
+      {
+        "date": "2027-01-04",
+        "day": "Monday",
+        "shiftType": "afternoon",
+        "start": "13:00",
+        "end": "21:30",
+        "paidHours": 8
+      },
+      {
+        "date": "2027-01-06",
+        "day": "Wednesday",
         "shiftType": "afternoon",
         "start": "13:00",
         "end": "21:30",
