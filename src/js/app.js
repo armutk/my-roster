@@ -1868,6 +1868,7 @@
   const SYNC_ENDPOINT = 'https://hermes.redgumlab.au/my-roster/sync';
   const SYNC_STATUS_ENDPOINT = 'https://hermes.redgumlab.au/my-roster/sync/status';
   const SYNC_TOKEN_KEY = 'sync-token';
+  const LAST_SYNC_KEY = 'last-sync';
 
   // Shared by the ?sync-token= link and the "paste setup code" box: trims, rejects empty, stores.
   function storeSyncToken(raw) {
@@ -1937,9 +1938,11 @@
         continue;
       }
       if (body && body.running === false) {
-        const changed = Number(body.changed_shifts) ||
-          (Number(body.added) || 0) + (Number(body.changed) || 0) + (Number(body.removed) || 0);
-        return { outcome: 'done', status: body.status, changed };
+        const added = Number(body.added) || 0;
+        const updated = Number(body.changed) || 0;
+        const removed = Number(body.removed) || 0;
+        const changed = Number(body.changed_shifts) || (added + updated + removed);
+        return { outcome: 'done', status: body.status, changed, added, updated, removed };
       }
       // still running (or a malformed body) — poll again
     }
@@ -1958,12 +1961,49 @@
       showSyncSetup(true);
     } else {
       showSyncSetup(false);
+      renderLastSync();
     }
   }
 
   function notSetUp() {
     setSyncStatus("Sync isn't set up on this device. Paste your setup code below.", true);
     showSyncSetup(true);
+  }
+
+  // The app reloads itself when a sync changes shifts, which wiped the
+  // "N shifts changed" line after ~0.6s. Keep the last result and re-show it.
+  function saveLastSync(detail) {
+    try {
+      localStorage.setItem(LAST_SYNC_KEY, JSON.stringify({ at: Date.now(), detail }));
+    } catch (err) { /* storage unavailable — non-fatal */ }
+  }
+
+  function syncAgo(ts) {
+    const s = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+    if (s < 45) return 'just now';
+    const m = Math.floor(s / 60);
+    if (m < 60) return m + ' min ago';
+    const h = Math.floor(m / 60);
+    if (h < 24) return h + (h === 1 ? ' hour ago' : ' hours ago');
+    const d = Math.floor(h / 24);
+    return d + (d === 1 ? ' day ago' : ' days ago');
+  }
+
+  function syncDetailText(n, added, updated, removed) {
+    if (!(n > 0)) return 'no changes';
+    const bits = [];
+    if (added > 0) bits.push(added + ' added');
+    if (updated > 0) bits.push(updated + ' changed');
+    if (removed > 0) bits.push(removed + ' removed');
+    const noun = n === 1 ? 'shift' : 'shifts';
+    return bits.length ? n + ' ' + noun + ' changed (' + bits.join(', ') + ')' : n + ' ' + noun + ' changed';
+  }
+
+  function renderLastSync() {
+    let rec = null;
+    try { rec = JSON.parse(localStorage.getItem(LAST_SYNC_KEY) || 'null'); } catch (err) { rec = null; }
+    if (!rec || !rec.at || !rec.detail) return;
+    setSyncStatus('Synced ' + syncAgo(rec.at) + ' · ' + rec.detail);
   }
 
   function saveSetupCode() {
@@ -2055,8 +2095,10 @@
       return;
     }
 
-    const n = result.changed;
-    setSyncStatus(n > 0 ? `Synced just now · ${n} shift${n === 1 ? '' : 's'} changed` : 'Synced just now · no changes');
+    const n = result.changed || 0;
+    const detail = syncDetailText(n, result.added || 0, result.updated || 0, result.removed || 0);
+    saveLastSync(detail);
+    setSyncStatus('Synced just now · ' + detail);
 
     // The server bumped CACHE_NAME when it changed the roster, so nudge the
     // service worker to fetch the new one.
