@@ -512,3 +512,19 @@ which is safe because the endpoint is token-gated. A device with no token keeps
 the button and shows "Sync isn't set up on this device"; wrong or missing
 tokens surface the same message, not an error. Cache is now `my-roster-v10`.
 
+### Persistent last-sync line — 19 Oct 2026
+
+The result line used to live ~0.6 s: a sync that changed shifts reloads the
+page, and the reload reset the status text. The result (`N shifts changed
+(a added, b changed, c removed)` or `no changes`) and its timestamp are now
+kept in localStorage (`last-sync`) and re-rendered on load as
+`Synced <ago> · <detail>`. `syncDetailText`/`syncAgo` build it from the
+`added`/`changed`/`removed` counts the status endpoint already returned.
+Released with cache `my-roster-v14`.
+
+Gotcha that forced v14: a manual release landing right after a sync release
+must bump **past** the sync's version. The 19 Oct change shipped under the
+same `my-roster-v13` as the 18 Oct sync commit for a few minutes — same
+service-worker bytes, so cache-first devices would have kept the old app.js.
+Any change to cached files needs a CACHE_NAME no other release has used.
+
