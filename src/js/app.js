@@ -1894,9 +1894,20 @@
   const SYNC_TOKEN_KEY = 'sync-token';
   const LAST_SYNC_KEY = 'last-sync';
 
-  // Shared by the ?sync-token= link and the "paste setup code" box: trims, rejects empty, stores.
+  // Pulls the token out of whatever was pasted: a bare code, or the whole setup
+  // link (…#sync-token=X or …?sync-token=X) copied from a message or Safari.
+  function extractSyncToken(raw) {
+    const text = String(raw || '').trim();
+    const m = text.match(/sync-token=([^&#\s]+)/);
+    if (m) {
+      try { return decodeURIComponent(m[1]).trim(); } catch (err) { return m[1].trim(); }
+    }
+    return /\s/.test(text) ? '' : text;
+  }
+
+  // Shared by the setup link and the paste box: extracts, rejects empty, stores.
   function storeSyncToken(raw) {
-    const token = String(raw || '').trim();
+    const token = extractSyncToken(raw);
     if (!token) return false;
     try {
       localStorage.setItem(SYNC_TOKEN_KEY, token);
@@ -1904,14 +1915,33 @@
     return true;
   }
 
+  // Set when this page load arrived through a setup link, so the Sync card can
+  // offer to hand the code on to the Home Screen app (separate storage on iOS).
+  let syncLinkCaptured = false;
+
+  function isStandaloneApp() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true ||
+      /MyRosterAndroid/.test(navigator.userAgent);
+  }
+
+  // Setup link: …/my-roster/#sync-token=TOKEN (preferred: the fragment never
+  // reaches GitHub's servers) or the older …?sync-token=TOKEN. Stored, then
+  // stripped from the address bar.
   function captureSyncToken() {
     const params = new URLSearchParams(location.search);
-    const token = params.get('sync-token');
+    const hash = new URLSearchParams(location.hash.replace(/^#/, ''));
+    const token = hash.get('sync-token') || params.get('sync-token');
     if (!token) return;
-    storeSyncToken(token);
+    syncLinkCaptured = storeSyncToken(token);
     params.delete('sync-token');
+    hash.delete('sync-token');
     const qs = params.toString();
-    history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
+    const hs = hash.toString();
+    history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + (hs ? '#' + hs : ''));
+  }
+
+  function setupLinkFor(token) {
+    return location.origin + location.pathname + '#sync-token=' + encodeURIComponent(token);
   }
 
   function syncAuthHeader() {
@@ -1978,20 +2008,88 @@
     if (box) box.hidden = !show;
   }
 
+  function canReadClipboard() {
+    return Boolean(navigator.clipboard && navigator.clipboard.readText);
+  }
+
+  function setupHint() {
+    return canReadClipboard()
+      ? "Sync isn't set up on this device. Copy your setup link, then tap Paste setup link."
+      : "Sync isn't set up on this device. Paste your setup link below and tap Save.";
+  }
+
+  function showHandOff(show) {
+    const box = document.getElementById('syncHandoff');
+    if (box) box.hidden = !show;
+  }
+
   function updateSyncButtonState() {
-    // No token yet: keep the button, hint at setup and offer the paste-a-code box.
+    const pasteBtn = document.getElementById('syncPaste');
+    if (pasteBtn) pasteBtn.hidden = !canReadClipboard();
+    // No token yet: keep the button, hint at setup and offer the paste box.
     if (!syncAuthHeader()) {
-      setSyncStatus("Sync isn't set up on this device — paste your setup code below.");
+      setSyncStatus(setupHint());
       showSyncSetup(true);
+      showHandOff(false);
     } else {
       showSyncSetup(false);
       renderLastSync();
+      // Opened from the setup link in a browser tab: on iPhone the Home Screen
+      // app has its own storage, so offer to copy the link across.
+      if (syncLinkCaptured && !isStandaloneApp()) {
+        setSyncStatus('Sync is set up in this browser. If you use My Roster from your Home Screen, tap Copy, open the app and tap Paste setup link.');
+        showHandOff(true);
+      }
     }
   }
 
   function notSetUp() {
-    setSyncStatus("Sync isn't set up on this device. Paste your setup code below.", true);
+    setSyncStatus(setupHint(), true);
     showSyncSetup(true);
+  }
+
+  async function copySetupLink() {
+    const token = localStorage.getItem(SYNC_TOKEN_KEY);
+    if (!token) return;
+    const link = setupLinkFor(token);
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(link);
+      ok = true;
+    } catch (err) {
+      // Older browsers: select a hidden field and use execCommand.
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = link;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+      } catch (e) { ok = false; }
+    }
+    setSyncStatus(ok
+      ? 'Copied. Now open My Roster from your Home Screen and tap Paste setup link.'
+      : "Couldn't copy here — long-press the setup link in your message and choose Copy instead.", !ok);
+  }
+
+  async function pasteSetupLink() {
+    let text = '';
+    try {
+      text = await navigator.clipboard.readText();
+    } catch (err) {
+      setSyncStatus("Couldn't read the clipboard. Long-press the box, choose Paste, then tap Save.", true);
+      document.getElementById('syncCode').focus();
+      return;
+    }
+    if (!storeSyncToken(text)) {
+      setSyncStatus("That didn't look like a setup link. Copy the setup link first, then tap Paste setup link.", true);
+      return;
+    }
+    showSyncSetup(false);
+    handleSync();
   }
 
   // The app reloads itself when a sync changes shifts, which wiped the
@@ -2033,7 +2131,7 @@
   function saveSetupCode() {
     const input = document.getElementById('syncCode');
     if (!storeSyncToken(input.value)) {
-      setSyncStatus('Paste the setup code first, then tap Save.', true);
+      setSyncStatus('Paste the setup link first, then tap Save.', true);
       return;
     }
     input.value = '';
@@ -2144,6 +2242,15 @@
   function initSyncButton() {
     document.getElementById('syncBtn').addEventListener('click', handleSync);
     document.getElementById('syncSave').addEventListener('click', saveSetupCode);
+    document.getElementById('syncPaste').addEventListener('click', pasteSetupLink);
+    document.getElementById('syncCopy').addEventListener('click', copySetupLink);
+    // A setup link opened while the app is already showing only changes the
+    // fragment, which does not reload the page.
+    window.addEventListener('hashchange', () => {
+      if (!/sync-token=/.test(location.hash)) return;
+      captureSyncToken();
+      updateSyncButtonState();
+    });
     document.getElementById('syncCode').addEventListener('keydown', (e) => { if (e.key === 'Enter') saveSetupCode(); });
     updateSyncButtonState();
   }

@@ -47,9 +47,15 @@
     <div class="card" id="syncCard">
       <div class="sync-title">Get the latest roster</div>
       <div class="sync-status" id="syncStatus">Pull new shifts from RosterOn now.</div>
-      <div class="sync-setup" id="syncSetup" hidden>
-        <input type="text" id="syncCode" placeholder="Paste setup code" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Setup code" />
-        <button class="btn" id="syncSave">Save</button>
+      <div id="syncSetup" hidden>
+        <button class="btn primary sync-paste" id="syncPaste" hidden>Paste setup link</button>
+        <div class="sync-setup">
+          <input type="text" id="syncCode" placeholder="Or paste setup link here" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Setup link" />
+          <button class="btn" id="syncSave">Save</button>
+        </div>
+      </div>
+      <div class="sync-setup" id="syncHandoff" hidden>
+        <button class="btn" id="syncCopy">Copy setup link for the Home Screen app</button>
       </div>
       <button class="btn primary sync-btn" id="syncBtn">Sync now</button>
     </div>

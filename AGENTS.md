@@ -528,3 +528,23 @@ same `my-roster-v13` as the 18 Oct sync commit for a few minutes — same
 service-worker bytes, so cache-first devices would have kept the old app.js.
 Any change to cached files needs a CACHE_NAME no other release has used.
 
+## 16. Setup link that reaches the Home Screen app — 20 Oct 2026
+
+Tohura's iPhone showed "Sync isn't set up on this device" with an empty paste box.
+The installed Home Screen app has its own storage, so a setup link opened in
+Safari never reached it, and the paste box wanted a raw code. The endpoint and
+token were fine: an on-demand sync through the API applied 3 new shifts the same
+day. Changes, cache `my-roster-v16`:
+
+- The setup link is now `…/my-roster/#sync-token=TOKEN`. The fragment is never
+  sent to GitHub's servers. `?sync-token=` still works. A `hashchange` listener
+  catches the link when the page is already open.
+- Opened in a browser tab, the card says sync is set up there and offers **Copy
+  setup link for the Home Screen app**.
+- When sync is not set up, the card shows a big **Paste setup link** button
+  (clipboard read; iOS shows its own Paste bubble). The box and Save remain as a
+  fallback, and both accept either the bare code or the whole link.
+- Fixed the paste box input collapsing to a sliver (`.btn` is `width:100%`).
+
+The token still never enters this public repo. It lives in
+`/etc/my-roster-sync-api.env` on the VPS and in Bitwarden.
